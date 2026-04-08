@@ -6,7 +6,7 @@
 
 ## קבצים בתיקייה
 - `index.html` – האפליקציה הראשית (HTML+CSS+JS + PWA meta tags + SW registration)
-- `words-data.js` – מאגר מילים (~5,134 מילים, 4 רמות: A1/A2/B1/B2)
+- `words-data.js` – מאגר מילים (5,104 מילים, 4 רמות: A1/A2/B1/B2)
 - `manifest.json` – PWA manifest (שם, צבעים, אייקונים)
 - `sw.js` – Service Worker (cache-first, אופליין)
 - `icons/icon-192.svg` – אייקון 192x192
@@ -44,7 +44,7 @@
 ### מה הושלם:
 1. ✅ תיקון words-data.js (סוגריים, מילים אנגליות, בדיקת הגייה)
 2. ✅ חיבור words-data.js ל-index.html + tabs A1/A2/B1/B2
-3. ✅ הרחבת B2 ל-~3,680 מילים (סה"כ 5,134 מילים במאגר)
+3. ✅ הרחבת B2 ל-113 קטגוריות, 3,650 מילים (סה"כ 5,104 מילים במאגר)
 4. ✅ הפיכה ל-PWA (manifest.json, sw.js, אייקוני SVG, meta tags, SW registration)
 5. ✅ פרויקט GitHub + פרוסה ב-GitHub Pages
 
