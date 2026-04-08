@@ -882,7 +882,7 @@ function renderProfile() {
     { icon:'🎬', name:'חובב סדרות', done: Object.keys(p).some(k => k.startsWith('done_') && SERIES[k.replace('done_','')]) },
     { icon:'🔥', name:'שבוע רצף', done: streak >= 7 },
     { icon:'🏆', name:'מומחה', done: xp >= 500 },
-    { icon:'💬', name:'שיחנ', done: !!p.elevenlabs_key },
+    { icon:'💬', name:'שיחן', done: !!p.elevenlabs_key },
   ];
 
   return `
