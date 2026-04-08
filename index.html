@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alicecool – טורקית בקלות</title>
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#262261" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Alicecool" />
+  <link rel="apple-touch-icon" href="icons/icon-192.svg" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --navy:   #262261;
+      --purple: #403C74;
+      --red:    #AE1B28;
+      --white:  #FFFFFF;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Heebo', sans-serif; background: #f4f4f8; color: #1a1a2e; direction: rtl; }
+
+    /* ── CARD FLIP ── */
+    .flip-card { perspective: 1000px; cursor: pointer; }
+    .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(.4,2,.6,1); transform-style: preserve-3d; }
+    .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+    .flip-front, .flip-back { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 1.25rem; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+    .flip-back { transform: rotateY(180deg); }
+
+    /* ── ANIMATIONS ── */
+    @keyframes fadeIn  { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes pop     { 0%,100% { transform:scale(1); } 50% { transform:scale(1.15); } }
+    @keyframes slideUp { from { transform:translateY(40px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+    .fade-in  { animation: fadeIn  .4s ease both; }
+    .pop      { animation: pop     .3s ease both; }
+    .slide-up { animation: slideUp .4s ease both; }
+
+    /* ── NAV ── */
+    .nav-item { display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 14px; border-radius:12px; cursor:pointer; transition:.2s; font-size:11px; color:#888; }
+    .nav-item.active { background:#262261; color:#fff; }
+    .nav-item:not(.active):hover { background:#e8e8f0; }
+
+    /* ── PROGRESS BAR ── */
+    .progress-bar { height:8px; border-radius:99px; background:#e0e0ee; overflow:hidden; }
+    .progress-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#403C74,#AE1B28); transition:width .6s ease; }
+
+    /* ── BUTTONS ── */
+    .btn-primary { background:#AE1B28; color:#fff; border:none; border-radius:12px; padding:12px 28px; font-size:16px; font-weight:700; cursor:pointer; transition:.2s; font-family:'Heebo',sans-serif; }
+    .btn-primary:hover { background:#c72030; transform:translateY(-1px); box-shadow:0 4px 16px #AE1B2840; }
+    .btn-secondary { background:#262261; color:#fff; border:none; border-radius:12px; padding:12px 28px; font-size:16px; font-weight:700; cursor:pointer; transition:.2s; font-family:'Heebo',sans-serif; }
+    .btn-secondary:hover { background:#403C74; transform:translateY(-1px); }
+    .btn-outline { background:transparent; color:#262261; border:2px solid #262261; border-radius:12px; padding:10px 24px; font-size:15px; font-weight:600; cursor:pointer; transition:.2s; font-family:'Heebo',sans-serif; }
+    .btn-outline:hover { background:#262261; color:#fff; }
+
+    /* ── CARD ── */
+    .card { background:#fff; border-radius:1.25rem; box-shadow:0 2px 12px #26226114; padding:1.5rem; }
+
+    /* ── QUIZ OPTION ── */
+    .quiz-option { border:2px solid #e0e0ee; border-radius:12px; padding:14px 18px; cursor:pointer; transition:.2s; font-size:15px; font-weight:500; background:#fff; width:100%; text-align:right; font-family:'Heebo',sans-serif; }
+    .quiz-option:hover:not(:disabled) { border-color:#403C74; background:#f0effa; }
+    .quiz-option.correct { border-color:#22c55e; background:#f0fdf4; color:#15803d; }
+    .quiz-option.wrong   { border-color:#ef4444; background:#fef2f2; color:#b91c1c; }
+
+    /* ── STREAK ── */
+    .streak-day { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
+    .streak-done   { background:#262261; color:#fff; }
+    .streak-today  { background:#AE1B28; color:#fff; box-shadow:0 0 0 3px #AE1B2840; }
+    .streak-future { background:#e0e0ee; color:#999; }
+
+    /* ── SCROLLBAR ── */
+    ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:#c0c0d0; border-radius:99px; }
+
+    /* ── MOBILE SAFE ── */
+    @media(max-width:640px) { .card { border-radius:1rem; padding:1.1rem; } }
+  </style>
+</head>
+<body class="min-h-screen">
+
+<!-- ══════════════════════════════════════
+     APP SHELL
+══════════════════════════════════════ -->
+<div id="app" class="max-w-lg mx-auto flex flex-col min-h-screen pb-24 px-3 pt-4 relative"></div>
+
+<!-- BOTTOM NAV -->
+<nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-lg z-50 flex justify-around items-center py-2 px-2">
+  <div class="nav-item active" onclick="navigate('home')" id="nav-home">
+    <span style="font-size:20px">🏠</span><span>בית</span>
+  </div>
+  <div class="nav-item" onclick="navigate('lessons')" id="nav-lessons">
+    <span style="font-size:20px">📚</span><span>שיעורים</span>
+  </div>
+  <div class="nav-item" onclick="navigate('series')" id="nav-series">
+    <span style="font-size:20px">🎬</span><span>סדרות</span>
+  </div>
+  <div class="nav-item" onclick="navigate('chat')" id="nav-chat">
+    <span style="font-size:20px">🎙️</span><span>שיחה</span>
+  </div>
+  <div class="nav-item" onclick="navigate('profile')" id="nav-profile">
+    <span style="font-size:20px">👤</span><span>פרופיל</span>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     DATA
+══════════════════════════════════════ -->
+<script src="words-data.js"></script>
+<script>
+// ─── FLATTEN WORDS_DB INTO SINGLE WORDS OBJECT ───
+const WORDS = {};
+const LEVEL_META = {
+  A1: { label: 'A1 מתחיל', color: '#22c55e' },
+  A2: { label: 'A2 בסיסי', color: '#3b82f6' },
+  B1: { label: 'B1 בינוני', color: '#f59e0b' },
+  B2: { label: 'B2 מתקדם', color: '#AE1B28' },
+};
+
+// Flatten: WORDS_DB.A1.greetings -> WORDS['A1_greetings']
+if (typeof WORDS_DB !== 'undefined') {
+  for (const level of Object.keys(WORDS_DB)) {
+    for (const [catKey, catData] of Object.entries(WORDS_DB[level])) {
+      WORDS[level + '_' + catKey] = { ...catData, _level: level };
+    }
+  }
+}
+
+// ─── SERIES WORDS ───
+const SERIES = {
+  romance: {
+    title: "רומנטיקה", icon: "❤️", color: "#AE1B28",
+    words: [
+      { tr: "Aşk",              he: "אהבה",              pron: "אַשְׁק" },
+      { tr: "Sevgi",            he: "חיבה / אהבה רכה",  pron: "סֶבְגִי" },
+      { tr: "Kalp",             he: "לב",                pron: "קַלְפּ" },
+      { tr: "Özlem",            he: "געגוע",             pron: "אֶזְלֶם" },
+      { tr: "Öpücük",           he: "נשיקה",             pron: "אֶפּיוּג'יוּק" },
+      { tr: "Sarılmak",         he: "לחבק",              pron: "סַרִילְמַק" },
+      { tr: "Seni seviyorum",   he: "אני אוהב/ת אותך",  pron: "סֶנִי סֶבִיוֹרוּם" },
+      { tr: "Aşık oldum",       he: "התאהבתי",           pron: "אַשִׁיק אוֹלְדוּם" },
+      { tr: "Güzel",            he: "יפה",               pron: "גיוּזֶל" },
+      { tr: "Harika",           he: "מדהים",             pron: "חַרִיקַה" },
+      { tr: "Birlikte",         he: "ביחד",              pron: "בִּירְלִיקְטֶה" },
+      { tr: "Sonsuza dek",      he: "לנצח",              pron: "סוֹנְסוּזַה דֶק" },
+    ]
+  },
+  anger: {
+    title: "כעס ועימות", icon: "😡", color: "#7c1a1a",
+    words: [
+      { tr: "Yeter!",           he: "מספיק! / די!",      pron: "יֶטֶר" },
+      { tr: "Bırak beni!",      he: "עזוב/י אותי!",     pron: "בִּירַק בֶּנִי" },
+      { tr: "Yalan söylüyorsun!", he: "אתה משקר!",       pron: "יַלַן סֶיְלִיוֹרְסוּן" },
+      { tr: "İhanet",           he: "בגידה",             pron: "אִיחַנֶט" },
+      { tr: "Neden?",           he: "למה?",              pron: "נֶדֶן" },
+      { tr: "Haksızsın",        he: "אתה לא צודק",      pron: "חַקְסִיזְסִין" },
+      { tr: "Kızgınım",         he: "אני כועס/ת",       pron: "קִיזְגִינִים" },
+      { tr: "Deli misin?",      he: "אתה/את משוגע/ת?",  pron: "דֶלִי מִיסִין" },
+      { tr: "Çık git!",         he: "צא/צאי מפה!",      pron: "צ'ִיק גִּיט" },
+      { tr: "Hiç inanmıyorum",  he: "אני בכלל לא מאמין/ה", pron: "חִיץ' אִינַנְמִיוֹרוּם" },
+      { tr: "Bu kadar!",        he: "זהו! / עד כאן!",   pron: "בּוּ קַדַר" },
+      { tr: "Utanmıyor musun?", he: "לא מתבייש/ת?",     pron: "אוּטַנְמִיוֹר מוּסוּן" },
+    ]
+  },
+  jealousy: {
+    title: "קנאה וחשד", icon: "👁️", color: "#403C74",
+    words: [
+      { tr: "Kıskançlık",       he: "קנאה",              pron: "קִישְׁקַנְץ'ְלִיק" },
+      { tr: "Kıskanıyorum",     he: "אני מקנא/ת",       pron: "קִישְׁקַנִיוֹרוּם" },
+      { tr: "Şüphe",            he: "חשד",               pron: "שיוּפֶּה" },
+      { tr: "Güvenmiyorum",     he: "אני לא סומך/ת",    pron: "גיוּבֶנְמִיוֹרוּם" },
+      { tr: "Kim o?",           he: "מי זה/זאת?",        pron: "קִים אוֹ" },
+      { tr: "Neredeydin?",      he: "איפה היית?",        pron: "נֶרֶדֶיְדִין" },
+      { tr: "Kimle konuştun?",  he: "עם מי דיברת?",     pron: "קִימְלֶה קוֹנוּשְׁטוּן" },
+      { tr: "Açıkla bana",      he: "תסביר/י לי",       pron: "אַצ'ִיקְלַה בַּנַה" },
+      { tr: "Gizli bir şey mi?", he: "יש סוד?",          pron: "גִּיזְלִי בִּיר שֵׁיְ מִי" },
+      { tr: "Doğruyu söyle",    he: "תגיד/י את האמת",   pron: "דוֹגְ'רוּיוּ סֶיְלֶה" },
+      { tr: "İnanmıyorum sana", he: "אני לא מאמין/ה לך",pron: "אִינַנְמִיוֹרוּם סַנַה" },
+      { tr: "Beni aldatıyor musun?", he: "אתה בוגד/ת בי?", pron: "בֶּנִי אַלְדַטִיוֹר מוּסוּן" },
+    ]
+  },
+  breakup: {
+    title: "פרידה וכאב", icon: "💔", color: "#6b2737",
+    words: [
+      { tr: "Bitti",            he: "נגמר",              pron: "בִּיטִי" },
+      { tr: "Artık olamayız",   he: "כבר לא נוכל להיות יחד", pron: "אַרְטִיק אוֹלַמַיִיז" },
+      { tr: "Acıyor",           he: "כואב",              pron: "אַג'ִיוֹר" },
+      { tr: "Yalnızım",         he: "אני לבד",           pron: "יַלְנִיזִים" },
+      { tr: "Seni özlüyorum",   he: "אני מתגעגע/ת אליך", pron: "סֶנִי אֶזְליוּיוֹרוּם" },
+      { tr: "Gitme",            he: "אל תלך/תלכי",      pron: "גִּיטְמֶה" },
+      { tr: "Neden gidiyorsun?", he: "למה אתה/את הולך/ת?", pron: "נֶדֶן גִּידִיוֹרְסוּן" },
+      { tr: "Çok üzgünüm",      he: "אני מאוד עצוב/ה",  pron: "צ'וֹק אוּזְגיוּניוּם" },
+      { tr: "Vazgeçiyorum",     he: "אני מוותר/ת",      pron: "וַזְגֶצ'ִיוֹרוּם" },
+      { tr: "Boşanmak istiyorum", he: "אני רוצה להתגרש", pron: "בּוֹשַׁנְמַק אִיסְטִיוֹרוּם" },
+      { tr: "Her şey değişti",  he: "הכל השתנה",        pron: "חֶר שֵׁיְ דֶגִ'ישְׁטִי" },
+      { tr: "Artık sevmiyorum", he: "אני כבר לא אוהב/ת", pron: "אַרְטִיק סֶבְמִיוֹרוּם" },
+    ]
+  },
+  reconcile: {
+    title: "פיוס וסליחה", icon: "🤝", color: "#1a6b3a",
+    words: [
+      { tr: "Özür dilerim",     he: "אני מצטער/ת",      pron: "אֶזְיוּר דִּילֶרִים" },
+      { tr: "Affet beni",       he: "תסלח/י לי",        pron: "אַפֶּט בֶּנִי" },
+      { tr: "Hata yaptım",      he: "טעיתי",             pron: "חַטַה יַפְּטִים" },
+      { tr: "Bir şans ver",     he: "תן/תני לי הזדמנות", pron: "בִּיר שַׁנְס וֶר" },
+      { tr: "Değişeceğim",      he: "אשתנה",             pron: "דֶגִ'ישֶׁג'ֶגִ'ִים" },
+      { tr: "Seni hâlâ seviyorum", he: "אני עדיין אוהב/ת אותך", pron: "סֶנִי הַאלַא סֶבִיוֹרוּם" },
+      { tr: "Geri gel",         he: "חזור/חזרי",        pron: "גֶרִי גֶל" },
+      { tr: "Beraber olalım",   he: "בואו נהיה ביחד",   pron: "בֶּרַבֶּר אוֹלַלִים" },
+      { tr: "Seni kaybetmek istemiyorum", he: "אני לא רוצה לאבד אותך", pron: "סֶנִי קַיְבֶּטְמֶק אִיסְטֶמִיוֹרוּם" },
+      { tr: "Barışalım mı?",    he: "נתפייס?",           pron: "בַּרִישַׁלִים מִי" },
+      { tr: "Yeniden başlayalım", he: "נתחיל מחדש",     pron: "יֶנִידֶן בַּשְׁלַיַלִים" },
+      { tr: "Güveniyorum sana", he: "אני סומך/ת עליך",  pron: "גיוּבֶנִיוֹרוּם סַנַה" },
+    ]
+  },
+  family: {
+    title: "משפחה ודרמה", icon: "👨‍👩‍👧", color: "#7a5c00",
+    words: [
+      { tr: "Aile",             he: "משפחה",             pron: "אַאִילֶה" },
+      { tr: "Anne",             he: "אמא",               pron: "אַנֶּה" },
+      { tr: "Baba",             he: "אבא",               pron: "בַּבַּה" },
+      { tr: "Kardeş",           he: "אח / אחות",         pron: "קַרְדֶש" },
+      { tr: "Onur",             he: "כבוד / שם טוב",     pron: "אוֹנוּר" },
+      { tr: "Gelenek",          he: "מסורת",             pron: "גֶלֶנֶק" },
+      { tr: "Yükümlülük",       he: "חובה / מחויבות",    pron: "יוּקיוּמְליוּליוּק" },
+      { tr: "Miras",            he: "ירושה",             pron: "מִירַס" },
+      { tr: "Kader",            he: "גורל",              pron: "קַדֶר" },
+      { tr: "Yemin",            he: "שבועה",             pron: "יֶמִין" },
+      { tr: "İntikam",          he: "נקמה",              pron: "אִינְטִיקַם" },
+      { tr: "Adalet",           he: "צדק",               pron: "עַדַאלֶט" },
+    ]
+  },
+  power: {
+    title: "כוח ועסקים", icon: "💼", color: "#1a3d6b",
+    words: [
+      { tr: "Güç",              he: "כוח",               pron: "גיוּץ'" },
+      { tr: "İş dünyası",       he: "עולם העסקים",       pron: "אִיש דיוּנְיַאסִי" },
+      { tr: "Tehdit",           he: "איום",              pron: "טֶחְדִיט" },
+      { tr: "Söz veriyorum",    he: "אני מבטיח/ה",      pron: "סֶז וֶרִיוֹרוּם" },
+      { tr: "Anlaşma",          he: "עסקה / הסכם",      pron: "אַנְלַשְׁמַה" },
+      { tr: "Kontrol",          he: "שליטה / בקרה",      pron: "קוֹנְטְרוֹל" },
+      { tr: "Karar",            he: "החלטה",             pron: "קַרַר" },
+      { tr: "Ortak",            he: "שותף",              pron: "אוֹרְטַק" },
+      { tr: "Rakip",            he: "מתחרה",             pron: "רַקִיפּ" },
+      { tr: "Zafer",            he: "ניצחון",            pron: "זַפֶר" },
+      { tr: "Başarı",           he: "הצלחה",             pron: "בַּשַׁרִי" },
+      { tr: "Hırs",             he: "שאפתנות / תאווה",  pron: "חִירְס" },
+    ]
+  },
+  feelings: {
+    title: "רגשות עמוקים", icon: "😢", color: "#4a3060",
+    words: [
+      { tr: "Ağlamak",          he: "לבכות",             pron: "אַגְ'לַמַק" },
+      { tr: "Acı",              he: "כאב / סבל",         pron: "אַג'ִי" },
+      { tr: "Yalnızlık",        he: "בדידות",            pron: "יַלְנִיזְלִיק" },
+      { tr: "Umut",             he: "תקווה",             pron: "אוּמוּט" },
+      { tr: "Korku",            he: "פחד",               pron: "קוֹרְקוּ" },
+      { tr: "Mutluluk",         he: "אושר / שמחה",      pron: "מוּטְלוּלוּק" },
+      { tr: "Hüzün",            he: "עצב / מרמלנה",     pron: "חיוּזיוּן" },
+      { tr: "Öfke",             he: "זעם",               pron: "אֶפְקֶה" },
+      { tr: "Şaşkınlık",        he: "הפתעה / פליאה",    pron: "שַׁשְׁקִינְלִיק" },
+      { tr: "Pişmanlık",        he: "חרטה",              pron: "פִּישְׁמַנְלִיק" },
+      { tr: "Kırgınlık",        he: "עלבון / אכזבה",    pron: "קִירְגִינְלִיק" },
+      { tr: "Hayal kırıklığı",  he: "אכזבה",             pron: "חַיַל קִירִיקְלִיגִי" },
+    ]
+  }
+};
+
+// ─── STATE ───
+const state = {
+  screen: 'home',
+  selectedLevel: 'A1',
+  flashIdx: 0,
+  flashCategory: null,
+  flashSource: 'lessons', // 'lessons' or 'series'
+  quizIdx: 0,
+  quizAnswered: false,
+  quizScore: 0,
+  quizTotal: 0,
+  seriesCategory: null,
+  elevenlabsKey: '',
+  elevenlabsAgentId: '',
+};
+
+// ─── PROGRESS (localStorage) ───
+function getProgress() {
+  try { return JSON.parse(localStorage.getItem('alicecool_progress') || '{}'); } catch { return {}; }
+}
+function saveProgress(key, val) {
+  const p = getProgress(); p[key] = val; localStorage.setItem('alicecool_progress', JSON.stringify(p));
+}
+function addXP(n) {
+  const p = getProgress(); p.xp = (p.xp || 0) + n; localStorage.setItem('alicecool_progress', JSON.stringify(p));
+}
+function updateStreak() {
+  const p = getProgress();
+  const today = new Date().toDateString();
+  if (p.lastDay !== today) {
+    const yesterday = new Date(Date.now() - 86400000).toDateString();
+    p.streak = (p.lastDay === yesterday) ? (p.streak || 0) + 1 : 1;
+    p.lastDay = today;
+    localStorage.setItem('alicecool_progress', JSON.stringify(p));
+  }
+}
+updateStreak();
+
+// ─── ROUTER ───
+function navigate(screen, data = {}) {
+  state.screen = screen;
+  Object.assign(state, data);
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const navEl = document.getElementById('nav-' + screen);
+  if (navEl) navEl.classList.add('active');
+  render();
+  window.scrollTo(0, 0);
+}
+
+// ══════════════════════════════════════
+//  SCREENS
+// ══════════════════════════════════════
+
+function renderHome() {
+  const p = getProgress();
+  const xp = p.xp || 0;
+  const streak = p.streak || 1;
+  const completed = Object.keys(p).filter(k => k.startsWith('done_')).length;
+  const days = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+  const dayItems = days.map((d, i) => {
+    const cls = i < streak - 1 ? 'streak-done' : i === Math.min(streak - 1, 6) ? 'streak-today' : 'streak-future';
+    return `<div class="streak-day ${cls}">${d}</div>`;
+  }).join('');
+
+  return `
+  <div class="fade-in space-y-4">
+    <!-- HEADER -->
+    <div class="flex items-center justify-between mb-2">
+      <div>
+        <div style="font-size:11px;color:#888;font-weight:600;letter-spacing:1px">ALICECOOL</div>
+        <h1 style="font-size:22px;font-weight:800;color:#262261">טורקית בקלות 🇹🇷</h1>
+      </div>
+      <img src="לוגו.png" alt="Alicecool" style="height:44px;object-fit:contain" onerror="this.style.display='none'">
+    </div>
+
+    <!-- STREAK -->
+    <div class="card">
+      <div class="flex items-center justify-between mb-3">
+        <div>
+          <div style="font-size:13px;color:#888;font-weight:500">רצף יומי</div>
+          <div style="font-size:26px;font-weight:800;color:#AE1B28">🔥 ${streak} ימים</div>
+        </div>
+        <div style="text-align:center">
+          <div style="font-size:26px;font-weight:800;color:#262261">${xp}</div>
+          <div style="font-size:12px;color:#888">נקודות XP</div>
+        </div>
+      </div>
+      <div class="flex justify-between gap-1">${dayItems}</div>
+    </div>
+
+    <!-- QUICK START -->
+    <div class="card" style="background:linear-gradient(135deg,#262261,#403C74)">
+      <div style="color:#fff;font-size:18px;font-weight:700;margin-bottom:4px">המשך ללמוד 📖</div>
+      <div style="color:#c0c0e0;font-size:13px;margin-bottom:14px">ממשיכים מאיפה שעצרת</div>
+      <button class="btn-primary" onclick="navigate('lessons')" style="background:#AE1B28;width:100%">התחל שיעור</button>
+    </div>
+
+    <!-- CATEGORIES GRID -->
+    <div style="font-size:17px;font-weight:700;color:#262261;margin-top:4px">מה תרצה לתרגל?</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="card" style="cursor:pointer;border:2px solid #f0effa" onclick="navigate('lessons')">
+        <div style="font-size:28px">📚</div>
+        <div style="font-weight:700;color:#262261;margin-top:4px">שיעורים</div>
+        <div style="font-size:12px;color:#888">A1 → B2</div>
+      </div>
+      <div class="card" style="cursor:pointer;border:2px solid #fde8ea" onclick="navigate('series')">
+        <div style="font-size:28px">🎬</div>
+        <div style="font-weight:700;color:#AE1B28;margin-top:4px">מילות סדרות</div>
+        <div style="font-size:12px;color:#888">8 קטגוריות</div>
+      </div>
+      <div class="card" style="cursor:pointer;border:2px solid #e8f5e9" onclick="navigate('chat')">
+        <div style="font-size:28px">🎙️</div>
+        <div style="font-weight:700;color:#1a6b3a;margin-top:4px">שיחה עם בוט</div>
+        <div style="font-size:12px;color:#888">ElevenLabs AI</div>
+      </div>
+      <div class="card" style="cursor:pointer;border:2px solid #f0effa" onclick="navigate('profile')">
+        <div style="font-size:28px">📊</div>
+        <div style="font-weight:700;color:#403C74;margin-top:4px">ההתקדמות שלי</div>
+        <div style="font-size:12px;color:#888">${completed} קטגוריות הושלמו</div>
+      </div>
+    </div>
+
+    <!-- TIP -->
+    <div class="card" style="background:#fffbea;border:1px solid #fde68a">
+      <div style="font-size:13px;font-weight:600;color:#92400e">💡 טיפ יומי</div>
+      <div style="font-size:13px;color:#78350f;margin-top:4px">
+        בטורקית, האות <strong>ş</strong> נהגית כמו "ש", ו-<strong>ç</strong> כמו "צ'".
+        האות <strong>ı</strong> (ללא נקודה) היא צליל שאין בעברית – משהו בין "אִ" ל-"ה".
+      </div>
+    </div>
+  </div>`;
+}
+
+function renderLessons() {
+  const p = getProgress();
+  const selectedLevel = state.selectedLevel || 'A1';
+  const levels = Object.keys(LEVEL_META);
+
+  // Filter categories for selected level
+  const cats = Object.entries(WORDS).filter(([key, cat]) => cat._level === selectedLevel);
+
+  // Count total words per level
+  const levelCounts = {};
+  for (const lvl of levels) {
+    levelCounts[lvl] = Object.entries(WORDS)
+      .filter(([k, c]) => c._level === lvl)
+      .reduce((sum, [k, c]) => sum + c.words.length, 0);
+  }
+
+  return `
+  <div class="fade-in">
+    <h2 style="font-size:22px;font-weight:800;color:#262261;margin-bottom:4px">📚 שיעורים</h2>
+    <p style="font-size:13px;color:#888;margin-bottom:16px">${Object.keys(WORDS).length} קטגוריות · ${Object.values(WORDS).reduce((s,c) => s + c.words.length, 0)} מילים</p>
+
+    <!-- LEVEL TABS -->
+    <div style="display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px">
+      ${levels.map(lvl => {
+        const meta = LEVEL_META[lvl];
+        const isActive = lvl === selectedLevel;
+        return `
+        <button onclick="state.selectedLevel='${lvl}';render()"
+          style="flex-shrink:0;padding:8px 16px;border-radius:99px;font-size:13px;font-weight:700;border:2px solid ${meta.color};cursor:pointer;font-family:'Heebo',sans-serif;transition:.2s;
+          ${isActive ? `background:${meta.color};color:#fff` : `background:#fff;color:${meta.color}`}">
+          ${meta.label} <span style="font-size:11px;opacity:.8">(${levelCounts[lvl]})</span>
+        </button>`;
+      }).join('')}
+    </div>
+
+    <!-- CATEGORY CARDS -->
+    <div class="space-y-3">
+      ${cats.length === 0 ? `
+        <div class="card" style="text-align:center;padding:32px;color:#888">
+          <div style="font-size:40px;margin-bottom:8px">🔒</div>
+          <div style="font-weight:600">אין קטגוריות ברמה זו עדיין</div>
+        </div>` : ''}
+      ${cats.map(([key, cat]) => {
+        const done = p['done_' + key];
+        const meta = LEVEL_META[cat._level];
+        return `
+        <div class="card" style="cursor:pointer;border:2px solid ${done ? '#22c55e22' : '#f0effa'};display:flex;align-items:center;gap:14px"
+             onclick="startFlash('${key}','lessons')">
+          <div style="font-size:32px">${cat.icon}</div>
+          <div style="flex:1">
+            <div style="font-weight:700;color:#262261;font-size:16px">${cat.title}</div>
+            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
+              <span style="background:${meta.color}22;color:${meta.color};font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px">${meta.label}</span>
+              <span style="font-size:12px;color:#888">${cat.words.length} מילים</span>
+            </div>
+          </div>
+          <div style="font-size:22px">${done ? '✅' : '▶️'}</div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function renderSeries() {
+  if (state.seriesCategory) {
+    return renderSeriesDetail(state.seriesCategory);
+  }
+  return `
+  <div class="fade-in">
+    <h2 style="font-size:22px;font-weight:800;color:#262261;margin-bottom:4px">🎬 מילות סדרות</h2>
+    <p style="font-size:13px;color:#888;margin-bottom:16px">מילים ישירות מהסדרות הטורקיות הגדולות</p>
+    <div class="space-y-3">
+      ${Object.entries(SERIES).map(([key, cat]) => `
+        <div class="card" style="cursor:pointer;border-right:4px solid ${cat.color};display:flex;align-items:center;gap:14px"
+             onclick="state.seriesCategory='${key}';render()">
+          <div style="font-size:32px">${cat.icon}</div>
+          <div style="flex:1">
+            <div style="font-weight:700;color:#262261;font-size:16px">${cat.title}</div>
+            <div style="font-size:12px;color:#888;margin-top:2px">${cat.words.length} ביטויים מהסדרות</div>
+          </div>
+          <div style="font-size:20px;color:#ccc">›</div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function renderSeriesDetail(catKey) {
+  const cat = SERIES[catKey];
+  return `
+  <div class="fade-in">
+    <button onclick="state.seriesCategory=null;render()" style="background:none;border:none;color:#262261;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:12px;font-family:'Heebo',sans-serif">
+      ← חזרה לסדרות
+    </button>
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
+      <div style="font-size:32px">${cat.icon}</div>
+      <h2 style="font-size:20px;font-weight:800;color:#262261">${cat.title}</h2>
+    </div>
+    <div style="display:flex;gap:10px;margin-bottom:16px">
+      <button class="btn-primary" onclick="startFlash('${catKey}','series')" style="flex:1">לומד עם כרטיסיות</button>
+      <button class="btn-secondary" onclick="startQuiz('${catKey}','series')" style="flex:1">מבחן</button>
+    </div>
+    <div class="space-y-2">
+      ${cat.words.map(w => `
+        <div class="card" style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+          <div>
+            <div style="font-weight:700;font-size:16px;color:#262261">${w.tr}</div>
+            <div style="font-size:12px;color:#888;margin-top:1px">הגייה: ${w.pron}</div>
+          </div>
+          <div style="text-align:left;direction:rtl">
+            <div style="font-size:15px;font-weight:600;color:#AE1B28">${w.he}</div>
+          </div>
+        </div>`).join('')}
+    </div>
+  </div>`;
+}
+
+function startFlash(catKey, source) {
+  state.flashIdx = 0;
+  state.flashCategory = catKey;
+  state.flashSource = source;
+  navigate('flash');
+}
+
+function renderFlash() {
+  const cat = state.flashSource === 'series' ? SERIES[state.flashCategory] : WORDS[state.flashCategory];
+  const words = cat.words;
+  const w = words[state.flashIdx];
+  const pct = Math.round(((state.flashIdx) / words.length) * 100);
+
+  return `
+  <div class="fade-in">
+    <div class="flex items-center justify-between mb-3">
+      <button onclick="navigate(state.flashSource === 'series' ? 'series' : 'lessons')"
+        style="background:none;border:none;color:#262261;font-size:15px;font-weight:600;cursor:pointer;font-family:'Heebo',sans-serif">← חזרה</button>
+      <span style="font-size:13px;color:#888;font-weight:600">${state.flashIdx + 1} / ${words.length}</span>
+    </div>
+
+    <div style="font-size:14px;font-weight:600;color:#262261;margin-bottom:6px">${cat.icon} ${cat.title}</div>
+    <div class="progress-bar mb-4"><div class="progress-fill" style="width:${pct}%"></div></div>
+
+    <!-- FLIP CARD -->
+    <div class="flip-card" id="fc" style="height:220px;margin-bottom:20px" onclick="document.getElementById('fc').classList.toggle('flipped')">
+      <div class="flip-card-inner" style="height:100%">
+        <div class="flip-front" style="background:linear-gradient(135deg,#262261,#403C74)">
+          <div style="font-size:11px;color:#9090c0;font-weight:600;letter-spacing:2px;margin-bottom:12px">טורקית</div>
+          <div style="font-size:36px;font-weight:800;color:#fff;text-align:center">${w.tr}</div>
+          <div style="font-size:13px;color:#9090c0;margin-top:12px">לחץ להפוך</div>
+        </div>
+        <div class="flip-back" style="background:#fff;border:3px solid #262261">
+          <div style="font-size:11px;color:#888;font-weight:600;letter-spacing:2px;margin-bottom:8px">עברית</div>
+          <div style="font-size:30px;font-weight:800;color:#AE1B28;text-align:center">${w.he}</div>
+          <div style="margin-top:12px;font-size:13px;color:#888;text-align:center">הגייה:</div>
+          <div style="font-size:15px;color:#403C74;font-weight:600;text-align:center;margin-top:4px">${w.pron}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CONTROLS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+      <button class="btn-outline" onclick="flashNav(-1)" ${state.flashIdx === 0 ? 'disabled style="opacity:.4"' : ''}>← הקודמת</button>
+      <button class="btn-primary" onclick="flashNav(1)">${state.flashIdx < words.length - 1 ? 'הבאה →' : '✅ סיים'}</button>
+    </div>
+    <button class="btn-secondary" onclick="startQuiz('${state.flashCategory}','${state.flashSource}')" style="width:100%">עבור למבחן 📝</button>
+  </div>`;
+}
+
+function flashNav(dir) {
+  const cat = state.flashSource === 'series' ? SERIES[state.flashCategory] : WORDS[state.flashCategory];
+  const fc = document.getElementById('fc');
+  if (fc) fc.classList.remove('flipped');
+  if (dir > 0 && state.flashIdx >= cat.words.length - 1) {
+    saveProgress('done_' + state.flashCategory, true);
+    addXP(20);
+    navigate(state.flashSource === 'series' ? 'series' : 'lessons');
+    return;
+  }
+  state.flashIdx = Math.max(0, Math.min(cat.words.length - 1, state.flashIdx + dir));
+  render();
+}
+
+function startQuiz(catKey, source) {
+  state.flashCategory = catKey;
+  state.flashSource = source;
+  state.quizIdx = 0;
+  state.quizAnswered = false;
+  state.quizScore = 0;
+  const cat = source === 'series' ? SERIES[catKey] : WORDS[catKey];
+  state.quizTotal = cat.words.length;
+  navigate('quiz');
+}
+
+function renderQuiz() {
+  const cat = state.flashSource === 'series' ? SERIES[state.flashCategory] : WORDS[state.flashCategory];
+  const words = cat.words;
+  if (state.quizIdx >= words.length) return renderQuizResult();
+
+  const correct = words[state.quizIdx];
+  const pool = words.filter((_, i) => i !== state.quizIdx);
+  const shuffled = pool.sort(() => Math.random() - .5).slice(0, 3);
+  const options = [...shuffled, correct].sort(() => Math.random() - .5);
+  const pct = Math.round((state.quizIdx / words.length) * 100);
+
+  return `
+  <div class="fade-in">
+    <div class="flex items-center justify-between mb-3">
+      <button onclick="navigate('flash',{flashCategory:state.flashCategory,flashSource:state.flashSource,flashIdx:0})"
+        style="background:none;border:none;color:#262261;font-size:15px;font-weight:600;cursor:pointer;font-family:'Heebo',sans-serif">← חזרה</button>
+      <span style="font-size:13px;color:#888;font-weight:600">${state.quizIdx + 1} / ${words.length}</span>
+    </div>
+    <div class="progress-bar mb-4"><div class="progress-fill" style="width:${pct}%"></div></div>
+
+    <div class="card mb-4" style="text-align:center;background:linear-gradient(135deg,#262261,#403C74);min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center">
+      <div style="font-size:12px;color:#9090c0;font-weight:600;letter-spacing:2px;margin-bottom:8px">מה הפירוש בעברית?</div>
+      <div style="font-size:34px;font-weight:800;color:#fff">${correct.tr}</div>
+    </div>
+
+    <div class="space-y-3" id="quiz-options">
+      ${options.map((o, i) => `
+        <button class="quiz-option" id="qo-${i}" onclick="answerQuiz(${i},${o === correct},'qo-${i}')">
+          ${o.he}
+        </button>`).join('')}
+    </div>
+    <div id="quiz-feedback" style="margin-top:12px;min-height:20px;text-align:center;font-weight:700;font-size:15px"></div>
+  </div>`;
+}
+
+function answerQuiz(idx, isCorrect, elId) {
+  if (state.quizAnswered) return;
+  state.quizAnswered = true;
+  const el = document.getElementById(elId);
+  const feedback = document.getElementById('quiz-feedback');
+  document.querySelectorAll('.quiz-option').forEach(b => b.disabled = true);
+
+  const cat = state.flashSource === 'series' ? SERIES[state.flashCategory] : WORDS[state.flashCategory];
+  const correct = cat.words[state.quizIdx];
+
+  if (isCorrect) {
+    el.classList.add('correct');
+    if (feedback) { feedback.textContent = '✅ מצוין!'; feedback.style.color = '#15803d'; }
+    state.quizScore++;
+    addXP(10);
+  } else {
+    el.classList.add('wrong');
+    if (feedback) { feedback.innerHTML = `❌ הנכון: <strong>${correct.he}</strong>`; feedback.style.color = '#b91c1c'; }
+    // highlight correct
+    document.querySelectorAll('.quiz-option').forEach(b => {
+      if (b.textContent.trim() === correct.he) b.classList.add('correct');
+    });
+  }
+
+  setTimeout(() => {
+    state.quizIdx++;
+    state.quizAnswered = false;
+    render();
+  }, 1400);
+}
+
+function renderQuizResult() {
+  const score = state.quizScore;
+  const total = state.quizTotal;
+  const pct = Math.round((score / total) * 100);
+  const emoji = pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '💪';
+  const msg = pct >= 80 ? 'מצוין! אתה שולט בחומר!' : pct >= 50 ? 'טוב! קצת עוד תרגול ותהיה מושלם' : 'המשך לתרגל, אתה בדרך הנכונה!';
+  addXP(pct >= 80 ? 30 : 10);
+  saveProgress('done_' + state.flashCategory, pct >= 80);
+
+  return `
+  <div class="fade-in" style="text-align:center;padding-top:24px">
+    <div style="font-size:72px;margin-bottom:12px">${emoji}</div>
+    <h2 style="font-size:26px;font-weight:800;color:#262261;margin-bottom:8px">${score} / ${total}</h2>
+    <div style="font-size:18px;color:#AE1B28;font-weight:700;margin-bottom:8px">${pct}%</div>
+    <p style="color:#555;margin-bottom:28px">${msg}</p>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <button class="btn-outline" onclick="startQuiz('${state.flashCategory}','${state.flashSource}')">נסה שוב</button>
+      <button class="btn-primary" onclick="navigate(state.flashSource==='series'?'series':'lessons')">המשך</button>
+    </div>
+  </div>`;
+}
+
+function renderChat() {
+  const p = getProgress();
+  const hasKey = p.elevenlabs_key && p.elevenlabs_agent;
+
+  if (!hasKey) {
+    return `
+    <div class="fade-in">
+      <h2 style="font-size:22px;font-weight:800;color:#262261;margin-bottom:4px">🎙️ שיחה עם בוט</h2>
+      <p style="font-size:13px;color:#888;margin-bottom:20px">דיבור טורקית עם בינה מלאכותית</p>
+
+      <div class="card" style="border:2px solid #fde8ea;margin-bottom:16px">
+        <div style="font-size:20px;margin-bottom:8px">🔑 הגדרת ElevenLabs</div>
+        <p style="font-size:13px;color:#555;margin-bottom:16px;line-height:1.6">
+          כדי להפעיל את הבוט, תזדקק ל-API Key ול-Agent ID מ-ElevenLabs.
+          <br><strong>לחץ על "הדרכה" למטה</strong> לסרטון שלב-אחר-שלב.
+        </p>
+        <div class="space-y-3">
+          <div>
+            <label style="font-size:13px;font-weight:600;color:#262261;display:block;margin-bottom:4px">API Key</label>
+            <input id="el-key" type="password" placeholder="xi-api-key-..." value="${p.elevenlabs_key || ''}"
+              style="width:100%;padding:10px 14px;border:2px solid #e0e0ee;border-radius:10px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr">
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:600;color:#262261;display:block;margin-bottom:4px">Agent ID</label>
+            <input id="el-agent" type="text" placeholder="agent_..." value="${p.elevenlabs_agent || ''}"
+              style="width:100%;padding:10px 14px;border:2px solid #e0e0ee;border-radius:10px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr">
+          </div>
+          <button class="btn-primary" onclick="saveEL()" style="width:100%">שמור והפעל</button>
+        </div>
+      </div>
+
+      <!-- SETUP GUIDE -->
+      <div class="card" style="background:#f0effa">
+        <div style="font-weight:700;color:#262261;font-size:16px;margin-bottom:12px">📋 איך מגדירים? (שלב-אחר-שלב)</div>
+        ${[
+          ['1','היכנס ל-ElevenLabs.io והתחבר לחשבון שלך'],
+          ['2','לחץ על הפרופיל שלך (למעלה מימין) ← "Profile + API Key"'],
+          ['3','העתק את ה-API Key ● הדבק בשדה למעלה'],
+          ['4','עבור ל-"Conversational AI" בתפריט הצד'],
+          ['5','לחץ "Create Agent" ← בחר "Blank"'],
+          ['6','שם הבוט: Türkçe Öğretmeni | שפה ראשית: Turkish'],
+          ['7','הוסף System Prompt – לחץ כאן לקבל את הפרומפט המוכן ⬇️'],
+          ['8','לחץ "Save" ← העתק את ה-Agent ID מהכתובת / מ-Settings'],
+          ['9','חזור לכאן, הדבק את ה-Agent ID ולחץ שמור!'],
+        ].map(([n, t]) => `
+          <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+            <div style="min-width:26px;height:26px;border-radius:50%;background:#262261;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">${n}</div>
+            <div style="font-size:13px;color:#333;line-height:1.5">${t}</div>
+          </div>`).join('')}
+        <button class="btn-secondary" onclick="showPrompt()" style="width:100%;margin-top:8px">📋 הצג System Prompt לבוט</button>
+      </div>
+    </div>`;
+  }
+
+  // Chat UI (ElevenLabs Conversational AI widget)
+  return `
+  <div class="fade-in">
+    <div class="flex items-center justify-between mb-4">
+      <div>
+        <h2 style="font-size:22px;font-weight:800;color:#262261">🎙️ שיחה עם הבוט</h2>
+        <p style="font-size:13px;color:#888">לחץ Start ותתחיל לדבר טורקית!</p>
+      </div>
+      <button onclick="clearEL()" style="background:none;border:none;font-size:12px;color:#888;cursor:pointer;text-decoration:underline">שנה הגדרות</button>
+    </div>
+
+    <div class="card" style="background:linear-gradient(135deg,#262261,#403C74);text-align:center;padding:32px;margin-bottom:16px">
+      <div style="font-size:48px;margin-bottom:12px">🤖</div>
+      <div style="color:#fff;font-size:18px;font-weight:700;margin-bottom:6px">Türkçe Öğretmeni</div>
+      <div style="color:#9090c0;font-size:13px;margin-bottom:20px">מורה לטורקית – מדבר גם בעברית</div>
+      <button class="btn-primary" id="start-chat-btn" onclick="startConversation()" style="font-size:16px;padding:14px 36px">
+        🎙️ התחל שיחה
+      </button>
+    </div>
+
+    <div id="chat-status" class="card" style="display:none;text-align:center">
+      <div id="chat-status-text" style="font-size:15px;color:#262261;font-weight:600"></div>
+    </div>
+
+    <div class="card" style="background:#fffbea;border:1px solid #fde68a">
+      <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">💡 טיפים לשיחה:</div>
+      <ul style="font-size:13px;color:#78350f;line-height:1.8;padding-right:16px">
+        <li>הבוט ישאל אותך באיזו דמות הוא יגלם</li>
+        <li>אתה יכול לבקש הסבר בעברית בכל עת</li>
+        <li>אמור "עצור" או "durdur" לסיום השיחה</li>
+        <li>הבוט יתקן אותך בעדינות אם תטעה</li>
+      </ul>
+    </div>
+  </div>`;
+}
+
+function saveEL() {
+  const key = document.getElementById('el-key')?.value?.trim();
+  const agent = document.getElementById('el-agent')?.value?.trim();
+  if (!key || !agent) { alert('נא למלא גם API Key וגם Agent ID'); return; }
+  saveProgress('elevenlabs_key', key);
+  saveProgress('elevenlabs_agent', agent);
+  render();
+}
+function clearEL() {
+  saveProgress('elevenlabs_key', '');
+  saveProgress('elevenlabs_agent', '');
+  render();
+}
+
+function showPrompt() {
+  const prompt = `You are a friendly Turkish language teacher named "Hoca" (meaning "teacher" in Turkish).
+You help Hebrew speakers learn Turkish in a fun and encouraging way.
+
+IMPORTANT RULES:
+1. At the start of every conversation, ask the user: "איזו דמות אתה רוצה שאגלם?" (Which character would you like me to play?) and give 3-4 options like: מורה סבלני (patient teacher) / חבר/ה טורקי (Turkish friend) / דמות מסדרה (drama character) / מדריך טיול (travel guide).
+2. Adapt your personality based on their choice.
+3. Speak PRIMARILY in Turkish, but explain grammar, corrections, and tips in HEBREW.
+4. Correct mistakes gently – say what was wrong and give the correct form.
+5. Keep sentences simple and suitable for beginner-intermediate level.
+6. Encourage the learner frequently.
+7. If the user writes in Hebrew, respond in Hebrew first, then teach the Turkish equivalent.
+8. Use emojis to make the conversation friendly 😊🇹🇷
+
+EXAMPLE OPENING:
+"שלום! אני Hoca, המורה שלך לטורקית! 🇹🇷
+איזו דמות אתה רוצה שאגלם?
+1️⃣ מורה סבלני
+2️⃣ חבר טורקי
+3️⃣ דמות מסדרה דרמטית
+4️⃣ מדריך טיול
+?Nasıl yardımcı olabilirim"`;
+
+  const modal = document.createElement('div');
+  modal.style.cssText = 'position:fixed;inset:0;background:#00000080;z-index:999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:16px;padding:20px;max-width:480px;width:100%;max-height:80vh;overflow-y:auto">
+      <div style="font-weight:800;font-size:17px;color:#262261;margin-bottom:12px">📋 System Prompt לבוט</div>
+      <textarea readonly style="width:100%;height:260px;font-size:12px;border:1px solid #e0e0ee;border-radius:8px;padding:10px;font-family:monospace;direction:ltr;resize:none">${prompt}</textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
+        <button onclick="navigator.clipboard.writeText(document.querySelector('textarea').value);this.textContent='✅ הועתק!'"
+          style="background:#262261;color:#fff;border:none;border-radius:10px;padding:10px;font-size:14px;cursor:pointer;font-family:'Heebo',sans-serif">📋 העתק</button>
+        <button onclick="this.closest('[style*=fixed]').remove()"
+          style="background:#AE1B28;color:#fff;border:none;border-radius:10px;padding:10px;font-size:14px;cursor:pointer;font-family:'Heebo',sans-serif">סגור</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+async function startConversation() {
+  const p = getProgress();
+  const btn = document.getElementById('start-chat-btn');
+  const statusDiv = document.getElementById('chat-status');
+  const statusText = document.getElementById('chat-status-text');
+
+  if (!p.elevenlabs_key || !p.elevenlabs_agent) { alert('חסר API Key או Agent ID'); return; }
+
+  if (btn) btn.textContent = '⏳ מתחבר...';
+  if (statusDiv) statusDiv.style.display = 'block';
+  if (statusText) statusText.textContent = 'מתחבר לבוט...';
+
+  try {
+    // Load ElevenLabs SDK dynamically
+    if (!window.ElevenLabsConvAI) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://elevenlabs.io/convai-widget/index.js';
+        s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+
+    // Use fetch to start conversation session
+    const res = await fetch('https://api.elevenlabs.io/v1/convai/conversation/token', {
+      method: 'POST',
+      headers: { 'xi-api-key': p.elevenlabs_key, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ agent_id: p.elevenlabs_agent })
+    });
+
+    if (!res.ok) throw new Error('שגיאה בחיבור: ' + res.status);
+    const data = await res.json();
+
+    if (statusText) statusText.textContent = '✅ מחובר! מדבר...';
+    if (btn) { btn.textContent = '🔴 סיים שיחה'; btn.onclick = () => { location.reload(); }; }
+
+    // Open ElevenLabs widget or link
+    window.open(`https://elevenlabs.io/app/talk-with?agent_id=${p.elevenlabs_agent}`, '_blank');
+
+  } catch(e) {
+    if (statusText) { statusText.textContent = '❌ ' + e.message; statusText.style.color = '#b91c1c'; }
+    if (btn) { btn.textContent = '🎙️ נסה שוב'; btn.onclick = startConversation; }
+  }
+}
+
+function renderProfile() {
+  const p = getProgress();
+  const xp = p.xp || 0;
+  const streak = p.streak || 1;
+  const doneCount = Object.keys(p).filter(k => k.startsWith('done_')).length;
+  const totalCats = Object.keys(WORDS).length + Object.keys(SERIES).length;
+  const level = xp < 100 ? 'מתחיל 🌱' : xp < 300 ? 'בסיסי 📖' : xp < 600 ? 'בינוני 🌟' : 'מתקדם 🏆';
+  const nextXP = xp < 100 ? 100 : xp < 300 ? 300 : xp < 600 ? 600 : 1000;
+  const pct = Math.min(100, Math.round((xp / nextXP) * 100));
+
+  const badges = [
+    { icon:'🌱', name:'מתחיל', done: xp >= 1 },
+    { icon:'📖', name:'לומד', done: xp >= 100 },
+    { icon:'🎬', name:'חובב סדרות', done: Object.keys(p).some(k => k.startsWith('done_') && SERIES[k.replace('done_','')]) },
+    { icon:'🔥', name:'שבוע רצף', done: streak >= 7 },
+    { icon:'🏆', name:'מומחה', done: xp >= 500 },
+    { icon:'💬', name:'שיחנ', done: !!p.elevenlabs_key },
+  ];
+
+  return `
+  <div class="fade-in space-y-4">
+    <h2 style="font-size:22px;font-weight:800;color:#262261">👤 הפרופיל שלי</h2>
+
+    <div class="card" style="background:linear-gradient(135deg,#262261,#403C74);color:#fff;text-align:center;padding:28px">
+      <div style="font-size:52px;margin-bottom:8px">🎓</div>
+      <div style="font-size:20px;font-weight:800">${level}</div>
+      <div style="font-size:14px;color:#9090c0;margin-top:4px">${xp} נקודות XP</div>
+      <div style="margin-top:16px">
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#9090c0;margin-bottom:4px">
+          <span>${xp} XP</span><span>${nextXP} XP</span>
+        </div>
+        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+      </div>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
+      ${[
+        ['🔥', streak, 'ימי רצף'],
+        ['✅', doneCount, 'הושלמו'],
+        ['📚', totalCats, 'נושאים'],
+      ].map(([i,v,l]) => `
+        <div class="card" style="text-align:center;padding:14px 8px">
+          <div style="font-size:24px">${i}</div>
+          <div style="font-size:22px;font-weight:800;color:#262261">${v}</div>
+          <div style="font-size:11px;color:#888">${l}</div>
+        </div>`).join('')}
+    </div>
+
+    <div class="card">
+      <div style="font-weight:700;color:#262261;font-size:16px;margin-bottom:12px">🏅 עיטורים</div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
+        ${badges.map(b => `
+          <div style="text-align:center;opacity:${b.done ? 1 : 0.35}">
+            <div style="font-size:28px">${b.icon}</div>
+            <div style="font-size:11px;color:#555;font-weight:600;margin-top:4px">${b.name}</div>
+          </div>`).join('')}
+      </div>
+    </div>
+
+    <button class="btn-outline" onclick="if(confirm('לאפס את כל ההתקדמות?')){localStorage.removeItem('alicecool_progress');location.reload()}" style="width:100%;color:#888;border-color:#ddd">
+      אפס התקדמות
+    </button>
+  </div>`;
+}
+
+// ══════════════════════════════════════
+//  RENDER ENGINE
+// ══════════════════════════════════════
+function render() {
+  const app = document.getElementById('app');
+  const screens = {
+    home: renderHome,
+    lessons: renderLessons,
+    series: renderSeries,
+    flash: renderFlash,
+    quiz: renderQuiz,
+    chat: renderChat,
+    profile: renderProfile,
+  };
+  const fn = screens[state.screen];
+  app.innerHTML = fn ? fn() : renderHome();
+
+  // Update nav highlight
+  const navMap = { home:'home', lessons:'lessons', series:'series', flash:'lessons', quiz:'lessons', chat:'chat', profile:'profile' };
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  const activeNav = document.getElementById('nav-' + (navMap[state.screen] || state.screen));
+  if (activeNav) activeNav.classList.add('active');
+}
+
+// INIT
+render();
+
+// Register Service Worker
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js')
+    .then(reg => console.log('SW registered:', reg.scope))
+    .catch(err => console.log('SW registration failed:', err));
+}
+</script>
+</body>
+</html>
