@@ -60,11 +60,6 @@
 - שדה Voice ID בהגדרות הבוט
 - model: eleven_multilingual_v2
 
-### מבחן הגייה אופציונלי
-- מסך תרגול הגייה עם Alice (ElevenLabs Conversational AI)
-- agent נפרד (Pronunciation Agent ID)
-- לא משפיע על פתיחת קטגוריות – בונוס בלבד
-
 ### כלים פסיכולוגיים (engagement)
 - Daily Goal: יעד 10 מילים + Progress Ring
 - Streak System: רצף יומי + streak freeze (50 XP)
@@ -79,9 +74,9 @@
 
 ### ElevenLabs – הגדרות (localStorage)
 - `elevenlabs_key` – API Key
-- `elevenlabs_agent` – Agent ID (בוט שיחה)
 - `elevenlabs_voice` – Voice ID (TTS למילים)
-- `elevenlabs_pron_agent` – Pronunciation Agent ID (תרגול הגייה)
+- מסך הגדרות קול (⚙️) – פשוט: API Key + Voice ID בלבד
+- בוט שיחה ובוט הגייה הוסרו מהממשק (לא בשימוש כרגע)
 
 ## שלב נוכחי – 2026-04-09
 **האתר חי!** https://psymall.github.io/alicecool-app/
@@ -99,14 +94,29 @@
 10. ✅ שדרוג UI מלא (Duolingo-style) + צלילים + מערכות engagement
 11. ✅ נעילת קטגוריות ברצף + מבחן חובה 70%
 12. ✅ הגייה בקול (TTS) – כפתור 🔊 על כל מילה
-13. ✅ מבחן הגייה אופציונלי עם agent נפרד
+13. ✅ הסרת בוט שיחה ובוט הגייה – פישוט למסך הגדרות קול בלבד
+14. ✅ מסך הגדרות: רק API Key + Voice ID (בלי Agent IDs)
 
 ### ⏳ עצרנו כאן (2026-04-09):
-**הכל בנוי ופרוס. המשתמש צריך:**
-1. להגדיר Voice ID ב-ElevenLabs (לקול טורקי) ולהזין בהגדרות הבוט
-2. ליצור Pronunciation Agent ב-ElevenLabs (אופציונלי) ולהזין Agent ID
-3. להעתיק System Prompt מהאפליקציה ולהדביק ב-ElevenLabs Agent Settings
-4. לבדוק את כל הפיצ'רים החדשים באתר החי
+**הקוד מוכן. השלב הבא: Cloudflare Worker כדי להסתיר את ה-API Key**
+
+הבעיה: כרגע כל משתמש צריך להזין API Key בעצמו (מסך הגדרות).
+לקוחות אמיתיים לא יכולים לעשות את זה.
+אם נטמיע Key בקוד – הוא חשוף לכל מי שפותח DevTools.
+
+הפתרון שנבחר: **Cloudflare Worker (חינם)**
+- שרת proxy זעיר שמסתיר את ה-API Key
+- 100,000 קריאות/יום חינם
+- הלקוח לוחץ 🔊 → הקריאה עוברת דרך Worker → Worker שולח ל-ElevenLabs עם ה-Key
+- ה-Key לא חשוף בכלל בצד הלקוח
+- אפשר להוסיף rate limiting (הגבלת שימוש למשתמש)
+
+**מה צריך לעשות:**
+1. ליצור חשבון Cloudflare (חינם)
+2. ליצור Worker שמקבל מילה ושולח ל-ElevenLabs TTS API
+3. לשנות את speakWord() באפליקציה לקרוא ל-Worker במקום ישירות ל-ElevenLabs
+4. להסיר את מסך ההגדרות (לא צריך יותר – הכל מוטמע)
+5. הכפתור 🔊 יעבוד מיד לכל משתמש בלי הגדרות
 
 ## הערות טכניות
 - Node.js לא מותקן – לא להשתמש ב-npm/vite
@@ -114,3 +124,4 @@
 - כל שינוי הוא ישירות בקבצי HTML/JS
 - אחסון: GitHub Pages (בחירת המשתמש)
 - PWA: המשתמש רוצה אפשרות התקנה בטלפון
+- קהל יעד: 10K עוקבים בטיקטוק (ישראלים)
