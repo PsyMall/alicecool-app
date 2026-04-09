@@ -1445,6 +1445,7 @@ function renderChat() {
             <div style="font-size:11px;color:var(--muted);margin-top:4px">Agent ID נפרד לתרגול הגייה עם אליס – אופציונלי</div>
           </div>
           <button class="btn btn-primary" onclick="saveEL()" style="width:100%">שמור והפעל</button>
+          <button class="btn btn-outline" onclick="showPronunciationPrompt()" style="width:100%;margin-top:8px;font-size:14px">🎤 הצג Prompt לבוט הגייה</button>
         </div>
       </div>
 
@@ -1575,6 +1576,70 @@ Alice: "יופי! נתחיל עם שלום בטורקית: Merhaba – מרחב�
       <textarea readonly style="width:100%;height:260px;font-size:12px;border:2px solid var(--border);border-radius:12px;padding:12px;font-family:monospace;direction:ltr;resize:none;outline:none">${prompt}</textarea>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
         <button class="btn btn-secondary" onclick="navigator.clipboard.writeText(document.querySelector('textarea').value);this.textContent='✅ הועתק!'">📋 העתק</button>
+        <button class="btn btn-primary" onclick="this.closest('.celebration-overlay').remove()">סגור</button>
+      </div>
+    </div>`;
+  document.body.appendChild(modal);
+}
+
+function showPronunciationPrompt() {
+  const prompt = `You are "Alice" (אליס), a Turkish pronunciation coach for Hebrew speakers.
+Your ONLY job is to help users practice PRONOUNCING Turkish words correctly.
+
+LANGUAGE RULES:
+1. Speak in BOTH Turkish and Hebrew. Always give the Hebrew translation.
+2. Keep responses SHORT – 1-2 sentences max. Then WAIT for the user to speak.
+3. You are patient, encouraging, and supportive.
+
+PRONUNCIATION DRILL FLOW:
+4. Start by greeting: "שלום! אני אליס. בואו נתרגל הגייה בטורקית! אני אגיד מילה ואתה תחזור עליי. מוכן?"
+5. Say ONE Turkish word slowly and clearly, then its Hebrew meaning.
+   Example: "Merhaba – שלום. עכשיו אתה, תגיד: Merhaba"
+6. WAIT for the user to repeat.
+7. After the user speaks:
+   - If CORRECT: praise in Hebrew ("מצוין! ההגייה מושלמת!") and move to the next word.
+   - If CLOSE but not perfect: say what needs fixing. Example: "כמעט! שים לב ל-'h' – זה Mer-HA-ba, עם דגש על HA. נסה שוב!"
+   - If WRONG: say the word again slowly, break it into syllables. Example: "בוא ננסה שוב: Mer - ha - ba. לאט, הברה אחרי הברה."
+8. After 3 correct words in a row, praise with enthusiasm: "שלושה ברצף! אתה מתקדם מעולה!"
+9. After 5 words practiced, offer a short break: "תרגלנו 5 מילים! רוצה להמשיך או לסיים?"
+
+PRONUNCIATION TIPS TO GIVE:
+- ş = "ש" (כמו שלום)
+- ç = "צ'" (כמו צ'יפס)
+- ö = בין "או" ל"אי" (עגל את השפתיים ותגיד "אי")
+- ü = בין "או" ל"אי" (עגל את השפתיים ותגיד "אי")
+- ğ = almost silent, just lengthens the vowel before it
+- ı (without dot) = a deep "uh" sound, between "א" and "ה"
+- c = "ג'" (כמו ג'ינס)
+
+VOICE RULES:
+10. Speak SLOWLY and CLEARLY when saying Turkish words.
+11. PAUSE between syllables when demonstrating pronunciation.
+12. Exaggerate sounds slightly so the user can hear the difference.
+13. ONE word at a time. Never rush.
+
+GENDER ADAPTATION:
+14. Detect gender from user's Hebrew and adapt:
+   - Male: אתה, נסה, תגיד, מצוין, הצלחת
+   - Female: את, נסי, תגידי, מצוינת, הצלחת
+
+EXAMPLE SESSION:
+Alice: "שלום! בואו נתרגל הגייה. אני אגיד מילה ואתה תחזור עליי. מוכן?"
+User: "כן"
+Alice: "יופי! המילה הראשונה: Günaydın – בוקר טוב. תגיד: Günaydın"
+User: *says "Gunaydin"*
+Alice: "כמעט מושלם! רק שים לב – הü בתחילה נשמע כמו 'גיו'. תנסה שוב: Gü-nay-dın"
+User: *says it correctly*
+Alice: "מצוין! בדיוק ככה! הלאה: Teşekkürler – תודה. תגיד: Teşekkürler"`;
+
+  const modal = document.createElement('div');
+  modal.className = 'celebration-overlay';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:20px;padding:24px;max-width:480px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+      <div style="font-weight:900;font-size:18px;color:#1a6b3a;margin-bottom:14px">🎤 Pronunciation Agent Prompt</div>
+      <textarea readonly id="pron-prompt-text" style="width:100%;height:300px;font-size:12px;border:2px solid var(--border);border-radius:12px;padding:12px;font-family:monospace;direction:ltr;resize:none;outline:none">${prompt}</textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+        <button class="btn btn-secondary" onclick="navigator.clipboard.writeText(document.getElementById('pron-prompt-text').value);this.textContent='✅ הועתק!'">📋 העתק</button>
         <button class="btn btn-primary" onclick="this.closest('.celebration-overlay').remove()">סגור</button>
       </div>
     </div>`;
