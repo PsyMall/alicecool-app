@@ -264,7 +264,7 @@
     <span class="nav-icon">🎬</span><span>סדרות</span>
   </div>
   <div class="nav-item" onclick="navigate('chat')" id="nav-chat">
-    <span class="nav-icon">🎙️</span><span>שיחה</span>
+    <span class="nav-icon">⚙️</span><span>הגדרות</span>
   </div>
   <div class="nav-item" onclick="navigate('profile')" id="nav-profile">
     <span class="nav-icon">👤</span><span>פרופיל</span>
@@ -957,9 +957,9 @@ function renderHome() {
         <div style="font-size:12px;color:var(--muted)">8 קטגוריות</div>
       </div>
       <div class="card card-hover" style="cursor:pointer;text-align:center;padding:20px 12px" onclick="navigate('chat')">
-        <div style="font-size:32px;margin-bottom:6px">🎙️</div>
-        <div style="font-weight:700;color:#1a6b3a;font-size:14px">שיחה עם בוט</div>
-        <div style="font-size:12px;color:var(--muted)">ElevenLabs AI</div>
+        <div style="font-size:32px;margin-bottom:6px">⚙️</div>
+        <div style="font-weight:700;color:#1a6b3a;font-size:14px">הגדרות קול</div>
+        <div style="font-size:12px;color:var(--muted)">ElevenLabs TTS</div>
       </div>
       <div class="card card-hover" style="cursor:pointer;text-align:center;padding:20px 12px" onclick="navigate('profile')">
         <div style="font-size:32px;margin-bottom:6px">📊</div>
@@ -1326,9 +1326,6 @@ function renderQuizResult() {
 
   if (passed) { setTimeout(() => { SFX.fanfare(); showConfetti(25); }, 300); }
 
-  // Pronunciation quiz button
-  const hasPronAgent = getProgress().elevenlabs_pron_agent;
-
   return `
   <div class="fade-in" style="text-align:center;padding-top:20px">
     <div style="font-size:80px;margin-bottom:16px;animation:unlockBounce 0.5s ease">${emoji}</div>
@@ -1352,11 +1349,6 @@ function renderQuizResult() {
       <button class="btn btn-primary" onclick="navigate(state.flashSource==='series'?'series':'lessons')">המשך</button>
     </div>
 
-    ${hasPronAgent ? `
-    <button class="btn btn-secondary" onclick="startPronunciationQuiz('${state.flashCategory}','${state.flashSource}')"
-      style="width:100%;margin-top:12px">
-      🎤 תרגול הגייה (אופציונלי)
-    </button>` : ''}
   </div>`;
 }
 
@@ -1404,119 +1396,75 @@ function renderReview() {
 
 function renderChat() {
   const p = getProgress();
-  const hasKey = p.elevenlabs_key && p.elevenlabs_agent;
-
-  if (!hasKey) {
-    return `
-    <div class="fade-in">
-      <h2 style="font-size:24px;font-weight:900;color:var(--navy);margin-bottom:4px">🎙️ שיחה עם בוט</h2>
-      <p style="font-size:13px;color:var(--muted);margin-bottom:20px">דיבור טורקית עם בינה מלאכותית</p>
-
-      <div class="card" style="border:2px solid #fde8ea;margin-bottom:16px">
-        <div style="font-size:20px;margin-bottom:8px">🔑 הגדרת ElevenLabs</div>
-        <p style="font-size:13px;color:#555;margin-bottom:16px;line-height:1.6">
-          כדי להפעיל את הבוט, תזדקק ל-API Key ול-Agent ID מ-ElevenLabs.
-        </p>
-        <div style="display:flex;flex-direction:column;gap:12px">
-          <div>
-            <label style="font-size:13px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px">API Key</label>
-            <input id="el-key" type="password" placeholder="xi-api-key-..." value="${p.elevenlabs_key || ''}"
-              style="width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:14px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr;outline:none;transition:border 0.2s"
-              onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
-          </div>
-          <div>
-            <label style="font-size:13px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px">Agent ID</label>
-            <input id="el-agent" type="text" placeholder="agent_..." value="${p.elevenlabs_agent || ''}"
-              style="width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:14px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr;outline:none;transition:border 0.2s"
-              onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
-          </div>
-          <div>
-            <label style="font-size:13px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px">Voice ID (לביטוי מילים)</label>
-            <input id="el-voice" type="text" placeholder="voice_id..." value="${p.elevenlabs_voice || ''}"
-              style="width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:14px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr;outline:none;transition:border 0.2s"
-              onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
-            <div style="font-size:11px;color:var(--muted);margin-top:4px">Voice ID לקול טורקי – ניתן למצוא ב-ElevenLabs Voice Library</div>
-          </div>
-          <div>
-            <label style="font-size:13px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px">Pronunciation Agent ID (אופציונלי)</label>
-            <input id="el-pron-agent" type="text" placeholder="agent_pron_..." value="${p.elevenlabs_pron_agent || ''}"
-              style="width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:14px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr;outline:none;transition:border 0.2s"
-              onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
-            <div style="font-size:11px;color:var(--muted);margin-top:4px">Agent ID נפרד לתרגול הגייה עם אליס – אופציונלי</div>
-          </div>
-          <button class="btn btn-primary" onclick="saveEL()" style="width:100%">שמור והפעל</button>
-          <button class="btn btn-outline" onclick="showPronunciationPrompt()" style="width:100%;margin-top:8px;font-size:14px">🎤 הצג Prompt לבוט הגייה</button>
-        </div>
-      </div>
-
-      <div class="card" style="background:#f8f7ff">
-        <div style="font-weight:800;color:var(--navy);font-size:16px;margin-bottom:14px">📋 איך מגדירים?</div>
-        ${[
-          ['1','היכנס ל-ElevenLabs.io והתחבר'],
-          ['2','לחץ פרופיל ← "Profile + API Key"'],
-          ['3','העתק API Key ← הדבק למעלה'],
-          ['4','עבור ל-"Conversational AI"'],
-          ['5','לחץ "Create Agent" ← "Blank"'],
-          ['6','שם: Alice | שפה: Turkish'],
-          ['7','הוסף System Prompt (כפתור למטה)'],
-          ['8','Save ← העתק Agent ID'],
-          ['9','חזור הנה, הדבק ולחץ שמור!'],
-        ].map(([n, t]) => `
-          <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
-            <div style="min-width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${n}</div>
-            <div style="font-size:13px;color:#444;line-height:1.5">${t}</div>
-          </div>`).join('')}
-        <button class="btn btn-secondary" onclick="showPrompt()" style="width:100%;margin-top:8px">📋 הצג System Prompt</button>
-      </div>
-    </div>`;
-  }
+  const hasVoice = p.elevenlabs_key && p.elevenlabs_voice;
 
   return `
   <div class="fade-in">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <div>
-        <h2 style="font-size:24px;font-weight:900;color:var(--navy)">🎙️ שיחה עם הבוט</h2>
-        <p style="font-size:13px;color:var(--muted)">לחץ Start ותתחיל!</p>
+    <h2 style="font-size:24px;font-weight:900;color:var(--navy);margin-bottom:4px">⚙️ הגדרות קול</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px">חבר את ElevenLabs כדי לשמוע הגייה של מילים</p>
+
+    ${hasVoice ? `
+    <div class="card" style="background:#f0fdf4;border:2px solid var(--success);margin-bottom:16px;text-align:center;padding:20px">
+      <div style="font-size:32px;margin-bottom:8px">✅</div>
+      <div style="font-weight:700;color:#15803d;font-size:16px">מחובר!</div>
+      <div style="font-size:13px;color:#166534;margin-top:4px">לחץ 🔊 על כל מילה בשיעורים כדי לשמוע הגייה</div>
+    </div>` : `
+    <div class="card" style="background:#fef2f2;border:2px solid var(--danger);margin-bottom:16px;text-align:center;padding:20px">
+      <div style="font-size:32px;margin-bottom:8px">🔇</div>
+      <div style="font-weight:700;color:var(--danger);font-size:16px">לא מחובר</div>
+      <div style="font-size:13px;color:#991b1b;margin-top:4px">מלא את השדות למטה כדי להפעיל הגייה בקול</div>
+    </div>`}
+
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-size:18px;font-weight:800;color:var(--navy);margin-bottom:14px">🔑 ElevenLabs TTS</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <label style="font-size:13px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px">API Key</label>
+          <input id="el-key" type="password" placeholder="xi-api-key-..." value="${p.elevenlabs_key || ''}"
+            style="width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:14px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr;outline:none;transition:border 0.2s"
+            onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">נמצא ב-ElevenLabs → Profile → API Key</div>
+        </div>
+        <div>
+          <label style="font-size:13px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px">Voice ID</label>
+          <input id="el-voice" type="text" placeholder="voice_id..." value="${p.elevenlabs_voice || ''}"
+            style="width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:14px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr;outline:none;transition:border 0.2s"
+            onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">Voice ID של קול טורקי – נמצא ב-ElevenLabs → Voices</div>
+        </div>
+        <button class="btn btn-primary" onclick="saveEL()" style="width:100%">💾 שמור</button>
       </div>
-      <button onclick="clearEL()" class="btn btn-ghost" style="font-size:12px;padding:6px 12px">שנה הגדרות</button>
     </div>
 
-    <div class="card" style="background:linear-gradient(135deg,var(--navy),var(--purple));text-align:center;padding:36px;margin-bottom:16px">
-      <div style="font-size:56px;margin-bottom:14px">🤖</div>
-      <div style="color:#fff;font-size:20px;font-weight:800;margin-bottom:6px">Alice – אליס</div>
-      <div style="color:#9090c0;font-size:13px;margin-bottom:24px">מורה לטורקית – מדברת גם בעברית</div>
-      <button class="btn btn-primary" id="start-chat-btn" onclick="startConversation()" style="font-size:17px;padding:16px 40px">
-        🎙️ התחל שיחה
-      </button>
+    <div class="card" style="background:#f8f7ff">
+      <div style="font-weight:800;color:var(--navy);font-size:16px;margin-bottom:14px">📋 איך מגדירים?</div>
+      ${[
+        ['1','היכנס ל-ElevenLabs.io והתחבר'],
+        ['2','לחץ פרופיל ← "Profile + API Key" ← העתק'],
+        ['3','לך ל-Voices ← חפש קול טורקי ← העתק Voice ID'],
+        ['4','חזור הנה, הדבק ולחץ שמור!'],
+      ].map(([n, t]) => `
+        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
+          <div style="min-width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${n}</div>
+          <div style="font-size:13px;color:#444;line-height:1.5">${t}</div>
+        </div>`).join('')}
     </div>
 
-    <div id="chat-status" class="card" style="display:none;text-align:center">
-      <div id="chat-status-text" style="font-size:15px;color:var(--navy);font-weight:700"></div>
-    </div>
-
-    <div class="card" style="background:#fffbea;border:1px solid #fde68a">
-      <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">💡 טיפים:</div>
-      <ul style="font-size:13px;color:#78350f;line-height:1.8;padding-right:16px">
-        <li>הבוט ישאל באיזו דמות לגלם</li>
-        <li>בקש הסבר בעברית בכל עת</li>
-        <li>אמור "עצור" לסיום</li>
-      </ul>
-    </div>
+    ${hasVoice ? `
+    <button class="btn btn-ghost" onclick="clearEL()" style="width:100%;margin-top:12px;color:var(--muted)">
+      אפס הגדרות
+    </button>` : ''}
   </div>`;
 }
 
 function saveEL() {
   const key = document.getElementById('el-key')?.value?.trim();
-  const agent = document.getElementById('el-agent')?.value?.trim();
   const voice = document.getElementById('el-voice')?.value?.trim();
-  const pronAgent = document.getElementById('el-pron-agent')?.value?.trim();
-  if (!key || !agent) { alert('נא למלא גם API Key וגם Agent ID'); return; }
+  if (!key || !voice) { alert('נא למלא גם API Key וגם Voice ID'); return; }
   saveProgress('elevenlabs_key', key);
-  saveProgress('elevenlabs_agent', agent);
-  if (voice) saveProgress('elevenlabs_voice', voice);
-  if (pronAgent) saveProgress('elevenlabs_pron_agent', pronAgent);
+  saveProgress('elevenlabs_voice', voice);
   SFX.correct();
-  showToast('✅ נשמר בהצלחה!');
+  showToast('✅ נשמר! כפתור 🔊 פעיל בשיעורים');
   render();
 }
 function clearEL() {
