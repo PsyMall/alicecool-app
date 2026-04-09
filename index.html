@@ -846,34 +846,36 @@ async function startConversation() {
   if (statusText) statusText.textContent = 'מתחבר לבוט...';
 
   try {
-    // Load ElevenLabs SDK dynamically
-    if (!window.ElevenLabsConvAI) {
+    // Load ElevenLabs widget script
+    if (!document.querySelector('script[src*="elevenlabs.io/convai"]')) {
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
         s.src = 'https://elevenlabs.io/convai-widget/index.js';
+        s.async = true;
         s.onload = resolve; s.onerror = reject;
         document.head.appendChild(s);
       });
     }
 
-    // Use fetch to start conversation session
-    const res = await fetch('https://api.elevenlabs.io/v1/convai/conversation/token', {
-      method: 'POST',
-      headers: { 'xi-api-key': p.elevenlabs_key, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ agent_id: p.elevenlabs_agent })
-    });
+    // Remove any existing widget
+    document.querySelectorAll('elevenlabs-convai').forEach(el => el.remove());
 
-    if (!res.ok) throw new Error('שגיאה בחיבור: ' + res.status);
-    const data = await res.json();
+    // Create the ElevenLabs widget
+    const widget = document.createElement('elevenlabs-convai');
+    widget.setAttribute('agent-id', p.elevenlabs_agent);
+    document.body.appendChild(widget);
 
-    if (statusText) statusText.textContent = '✅ מחובר! מדבר...';
-    if (btn) { btn.textContent = '🔴 סיים שיחה'; btn.onclick = () => { location.reload(); }; }
-
-    // Open ElevenLabs widget or link
-    window.open(`https://elevenlabs.io/app/talk-with?agent_id=${p.elevenlabs_agent}`, '_blank');
+    if (statusText) statusText.textContent = '✅ מחובר! הבוט מוכן לשיחה';
+    if (btn) {
+      btn.textContent = '🔴 סיים שיחה';
+      btn.onclick = () => {
+        document.querySelectorAll('elevenlabs-convai').forEach(el => el.remove());
+        location.reload();
+      };
+    }
 
   } catch(e) {
-    if (statusText) { statusText.textContent = '❌ ' + e.message; statusText.style.color = '#b91c1c'; }
+    if (statusText) { statusText.textContent = '❌ שגיאה בטעינת הבוט: ' + e.message; statusText.style.color = '#b91c1c'; }
     if (btn) { btn.textContent = '🎙️ נסה שוב'; btn.onclick = startConversation; }
   }
 }
