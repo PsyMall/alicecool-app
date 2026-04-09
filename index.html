@@ -12,94 +12,244 @@
   <meta name="apple-mobile-web-app-title" content="Alicecool" />
   <link rel="apple-touch-icon" href="icons/icon-192.svg" />
   <script src="https://cdn.tailwindcss.com"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
   <style>
     :root {
       --navy:   #262261;
       --purple: #403C74;
       --red:    #AE1B28;
       --white:  #FFFFFF;
+      --bg:     #f7f7fc;
+      --card:   #ffffff;
+      --text:   #1a1a2e;
+      --muted:  #8888aa;
+      --border: #e8e8f4;
+      --success:#22c55e;
+      --warning:#f59e0b;
+      --danger: #ef4444;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: 'Heebo', sans-serif; background: #f4f4f8; color: #1a1a2e; direction: rtl; }
+    body { font-family: 'Heebo', sans-serif; background: var(--bg); color: var(--text); direction: rtl; -webkit-tap-highlight-color: transparent; }
+
+    /* ── CARD ── */
+    .card {
+      background: var(--card);
+      border-radius: 20px;
+      box-shadow: 0 2px 16px rgba(38,34,97,0.06);
+      padding: 1.4rem;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card-hover:active { transform: scale(0.97); }
 
     /* ── CARD FLIP ── */
     .flip-card { perspective: 1000px; cursor: pointer; }
     .flip-card-inner { position: relative; width: 100%; height: 100%; transition: transform 0.6s cubic-bezier(.4,2,.6,1); transform-style: preserve-3d; }
     .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
-    .flip-front, .flip-back { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 1.25rem; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
+    .flip-front, .flip-back { position: absolute; inset: 0; backface-visibility: hidden; border-radius: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 2rem; }
     .flip-back { transform: rotateY(180deg); }
 
     /* ── ANIMATIONS ── */
-    @keyframes fadeIn  { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
-    @keyframes pop     { 0%,100% { transform:scale(1); } 50% { transform:scale(1.15); } }
+    @keyframes fadeIn  { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes fadeInScale { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
+    @keyframes pop { 0%,100% { transform:scale(1); } 50% { transform:scale(1.12); } }
     @keyframes slideUp { from { transform:translateY(40px); opacity:0; } to { transform:translateY(0); opacity:1; } }
-    .fade-in  { animation: fadeIn  .4s ease both; }
-    .pop      { animation: pop     .3s ease both; }
+    @keyframes bounce { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
+    @keyframes shake { 0%,100% { transform:translateX(0); } 25% { transform:translateX(-4px); } 75% { transform:translateX(4px); } }
+    @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:0.6; } }
+    @keyframes fire { 0%,100% { text-shadow: 0 0 4px #ff6600, 0 0 8px #ff3300; } 50% { text-shadow: 0 0 12px #ff6600, 0 0 20px #ff3300, 0 0 30px #ff0000; } }
+    @keyframes confettiFall { 0% { transform:translateY(-10px) rotate(0deg); opacity:1; } 100% { transform:translateY(100vh) rotate(720deg); opacity:0; } }
+    @keyframes ringPulse { 0%,100% { stroke-width:8; } 50% { stroke-width:10; } }
+    @keyframes unlockBounce { 0% { transform:scale(0); } 60% { transform:scale(1.3); } 100% { transform:scale(1); } }
+    @keyframes slideInRight { from { transform:translateX(40px); opacity:0; } to { transform:translateX(0); opacity:1; } }
+    @keyframes glowPulse { 0%,100% { box-shadow: 0 0 5px rgba(174,27,40,0.3); } 50% { box-shadow: 0 0 20px rgba(174,27,40,0.6); } }
+
+    .fade-in { animation: fadeIn .4s ease both; }
+    .fade-in-scale { animation: fadeInScale .3s ease both; }
+    .pop { animation: pop .3s ease both; }
     .slide-up { animation: slideUp .4s ease both; }
+    .bounce { animation: bounce .5s ease both; }
+    .shake { animation: shake .3s ease both; }
+    .fire-glow { animation: fire 1.5s ease infinite; }
+
+    /* ── STAGGER ── */
+    .stagger-1 { animation-delay: 0.05s; }
+    .stagger-2 { animation-delay: 0.1s; }
+    .stagger-3 { animation-delay: 0.15s; }
+    .stagger-4 { animation-delay: 0.2s; }
+    .stagger-5 { animation-delay: 0.25s; }
 
     /* ── NAV ── */
-    .nav-item { display:flex; flex-direction:column; align-items:center; gap:2px; padding:8px 14px; border-radius:12px; cursor:pointer; transition:.2s; font-size:11px; color:#888; }
-    .nav-item.active { background:#262261; color:#fff; }
-    .nav-item:not(.active):hover { background:#e8e8f0; }
+    .bottom-nav {
+      position: fixed; bottom: 0; left: 0; right: 0;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-top: 1px solid var(--border);
+      z-index: 50;
+      display: flex; justify-content: space-around; align-items: center;
+      padding: 6px 8px calc(6px + env(safe-area-inset-bottom));
+    }
+    .nav-item {
+      display: flex; flex-direction: column; align-items: center; gap: 2px;
+      padding: 8px 16px; border-radius: 16px; cursor: pointer;
+      transition: all 0.25s ease; font-size: 11px; font-weight: 600; color: var(--muted);
+      position: relative;
+    }
+    .nav-item.active {
+      background: var(--navy); color: #fff;
+      box-shadow: 0 4px 12px rgba(38,34,97,0.3);
+    }
+    .nav-item:not(.active):active { background: #f0effa; transform: scale(0.95); }
+    .nav-icon { font-size: 20px; line-height: 1; }
+    .nav-badge {
+      position: absolute; top: 2px; right: 8px;
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--red); border: 2px solid #fff;
+    }
 
     /* ── PROGRESS BAR ── */
-    .progress-bar { height:8px; border-radius:99px; background:#e0e0ee; overflow:hidden; }
-    .progress-fill { height:100%; border-radius:99px; background:linear-gradient(90deg,#403C74,#AE1B28); transition:width .6s ease; }
+    .progress-bar { height: 10px; border-radius: 99px; background: #e8e8f4; overflow: hidden; }
+    .progress-fill { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#403C74,#AE1B28); transition: width .6s cubic-bezier(.4,0,.2,1); }
+
+    /* ── PROGRESS RING ── */
+    .progress-ring { transform: rotate(-90deg); }
+    .progress-ring-circle {
+      transition: stroke-dashoffset 0.8s cubic-bezier(.4,0,.2,1);
+      stroke-linecap: round;
+    }
 
     /* ── BUTTONS ── */
-    .btn-primary { background:#AE1B28; color:#fff; border:none; border-radius:12px; padding:12px 28px; font-size:16px; font-weight:700; cursor:pointer; transition:.2s; font-family:'Heebo',sans-serif; }
-    .btn-primary:hover { background:#c72030; transform:translateY(-1px); box-shadow:0 4px 16px #AE1B2840; }
-    .btn-secondary { background:#262261; color:#fff; border:none; border-radius:12px; padding:12px 28px; font-size:16px; font-weight:700; cursor:pointer; transition:.2s; font-family:'Heebo',sans-serif; }
-    .btn-secondary:hover { background:#403C74; transform:translateY(-1px); }
-    .btn-outline { background:transparent; color:#262261; border:2px solid #262261; border-radius:12px; padding:10px 24px; font-size:15px; font-weight:600; cursor:pointer; transition:.2s; font-family:'Heebo',sans-serif; }
-    .btn-outline:hover { background:#262261; color:#fff; }
-
-    /* ── CARD ── */
-    .card { background:#fff; border-radius:1.25rem; box-shadow:0 2px 12px #26226114; padding:1.5rem; }
+    .btn {
+      border: none; border-radius: 16px; padding: 14px 28px; font-size: 16px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s ease; font-family: 'Heebo', sans-serif;
+      display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn-primary { background: var(--red); color: #fff; }
+    .btn-primary:hover { background: #c72030; box-shadow: 0 4px 16px rgba(174,27,40,0.3); }
+    .btn-secondary { background: var(--navy); color: #fff; }
+    .btn-secondary:hover { background: var(--purple); }
+    .btn-outline { background: transparent; color: var(--navy); border: 2px solid var(--navy); }
+    .btn-outline:hover { background: var(--navy); color: #fff; }
+    .btn-ghost { background: transparent; color: var(--muted); }
+    .btn-ghost:hover { background: #f0effa; color: var(--navy); }
 
     /* ── QUIZ OPTION ── */
-    .quiz-option { border:2px solid #e0e0ee; border-radius:12px; padding:14px 18px; cursor:pointer; transition:.2s; font-size:15px; font-weight:500; background:#fff; width:100%; text-align:right; font-family:'Heebo',sans-serif; }
-    .quiz-option:hover:not(:disabled) { border-color:#403C74; background:#f0effa; }
-    .quiz-option.correct { border-color:#22c55e; background:#f0fdf4; color:#15803d; }
-    .quiz-option.wrong   { border-color:#ef4444; background:#fef2f2; color:#b91c1c; }
+    .quiz-option {
+      border: 2px solid var(--border); border-radius: 16px; padding: 16px 20px;
+      cursor: pointer; transition: all 0.2s ease; font-size: 16px; font-weight: 600;
+      background: #fff; width: 100%; text-align: right; font-family: 'Heebo', sans-serif;
+    }
+    .quiz-option:hover:not(:disabled) { border-color: var(--purple); background: #f8f7ff; transform: translateX(-2px); }
+    .quiz-option:active:not(:disabled) { transform: scale(0.98); }
+    .quiz-option.correct { border-color: var(--success); background: #f0fdf4; color: #15803d; }
+    .quiz-option.wrong { border-color: var(--danger); background: #fef2f2; color: #b91c1c; }
 
     /* ── STREAK ── */
-    .streak-day { width:36px; height:36px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:12px; font-weight:700; }
-    .streak-done   { background:#262261; color:#fff; }
-    .streak-today  { background:#AE1B28; color:#fff; box-shadow:0 0 0 3px #AE1B2840; }
-    .streak-future { background:#e0e0ee; color:#999; }
+    .streak-day {
+      width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 700; transition: all 0.3s;
+    }
+    .streak-done { background: var(--navy); color: #fff; }
+    .streak-today { background: var(--red); color: #fff; box-shadow: 0 0 0 3px rgba(174,27,40,0.3); }
+    .streak-future { background: #e8e8f4; color: #bbb; }
+
+    /* ── BADGE ── */
+    .badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 10px; border-radius: 99px; font-size: 11px; font-weight: 700;
+    }
+    .badge-level { font-size: 12px; padding: 4px 12px; }
+
+    /* ── WORD STRENGTH ── */
+    .strength-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+    .strength-strong { background: var(--success); }
+    .strength-medium { background: var(--warning); }
+    .strength-weak { background: var(--danger); }
+
+    /* ── TOAST ── */
+    .toast {
+      position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
+      background: var(--navy); color: #fff; padding: 14px 24px; border-radius: 16px;
+      font-weight: 700; font-size: 15px; z-index: 200; text-align: center;
+      box-shadow: 0 8px 32px rgba(38,34,97,0.3);
+      transition: transform 0.4s cubic-bezier(.4,2,.6,1);
+      pointer-events: none;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* ── CONFETTI ── */
+    .confetti-piece {
+      position: fixed; top: -10px; z-index: 300; pointer-events: none;
+      animation: confettiFall 2.5s ease forwards;
+    }
+
+    /* ── CELEBRATION OVERLAY ── */
+    .celebration-overlay {
+      position: fixed; inset: 0; z-index: 250; display: flex; align-items: center; justify-content: center;
+      background: rgba(0,0,0,0.4); backdrop-filter: blur(4px);
+      animation: fadeIn 0.3s ease;
+    }
+    .celebration-card {
+      background: #fff; border-radius: 24px; padding: 32px; text-align: center;
+      max-width: 320px; width: 90%;
+      animation: unlockBounce 0.5s ease both;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+    }
 
     /* ── SCROLLBAR ── */
-    ::-webkit-scrollbar { width:5px; } ::-webkit-scrollbar-track { background:transparent; } ::-webkit-scrollbar-thumb { background:#c0c0d0; border-radius:99px; }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: #d0d0e0; border-radius: 99px; }
 
     /* ── MOBILE SAFE ── */
-    @media(max-width:640px) { .card { border-radius:1rem; padding:1.1rem; } }
+    @media(max-width:640px) {
+      .card { border-radius: 16px; padding: 1.1rem; }
+    }
+
+    /* ── MUTE BUTTON ── */
+    .mute-btn {
+      position: fixed; top: 12px; left: 12px; z-index: 100;
+      width: 36px; height: 36px; border-radius: 50%; border: none;
+      background: rgba(255,255,255,0.9); backdrop-filter: blur(8px);
+      cursor: pointer; display: flex; align-items: center; justify-content: center;
+      font-size: 16px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      transition: all 0.2s;
+    }
+    .mute-btn:active { transform: scale(0.9); }
+
+    /* ── SPIN WHEEL ── */
+    @keyframes spinWheel { from { transform: rotate(0); } to { transform: rotate(1080deg); } }
   </style>
 </head>
 <body class="min-h-screen">
 
-<!-- ══════════════════════════════════════
-     APP SHELL
-══════════════════════════════════════ -->
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<!-- MUTE BUTTON -->
+<button class="mute-btn" id="mute-btn" onclick="toggleMute()">🔊</button>
+
+<!-- APP SHELL -->
 <div id="app" class="max-w-lg mx-auto flex flex-col min-h-screen pb-24 px-3 pt-4 relative"></div>
 
 <!-- BOTTOM NAV -->
-<nav id="bottom-nav" class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 shadow-lg z-50 flex justify-around items-center py-2 px-2">
+<nav class="bottom-nav" id="bottom-nav">
   <div class="nav-item active" onclick="navigate('home')" id="nav-home">
-    <span style="font-size:20px">🏠</span><span>בית</span>
+    <span class="nav-icon">🏠</span><span>בית</span>
   </div>
   <div class="nav-item" onclick="navigate('lessons')" id="nav-lessons">
-    <span style="font-size:20px">📚</span><span>שיעורים</span>
+    <span class="nav-icon">📚</span><span>שיעורים</span>
   </div>
   <div class="nav-item" onclick="navigate('series')" id="nav-series">
-    <span style="font-size:20px">🎬</span><span>סדרות</span>
+    <span class="nav-icon">🎬</span><span>סדרות</span>
   </div>
   <div class="nav-item" onclick="navigate('chat')" id="nav-chat">
-    <span style="font-size:20px">🎙️</span><span>שיחה</span>
+    <span class="nav-icon">🎙️</span><span>שיחה</span>
   </div>
   <div class="nav-item" onclick="navigate('profile')" id="nav-profile">
-    <span style="font-size:20px">👤</span><span>פרופיל</span>
+    <span class="nav-icon">👤</span><span>פרופיל</span>
+    <div class="nav-badge" id="nav-badge-profile" style="display:none"></div>
   </div>
 </nav>
 
@@ -108,16 +258,174 @@
 ══════════════════════════════════════ -->
 <script src="words-data.js"></script>
 <script>
-// ─── FLATTEN WORDS_DB INTO SINGLE WORDS OBJECT ───
+// ═══════════════════════════════════════
+//  SOUND ENGINE (Web Audio API)
+// ═══════════════════════════════════════
+const SFX = (() => {
+  let ctx = null;
+  let muted = false;
+
+  function getCtx() {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === 'suspended') ctx.resume();
+    return ctx;
+  }
+
+  function play(fn) {
+    if (muted) return;
+    try { fn(getCtx()); } catch(e) {}
+  }
+
+  return {
+    get muted() { return muted; },
+    toggleMute() { muted = !muted; return muted; },
+
+    correct() { play(c => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.connect(g); g.connect(c.destination);
+      o.type = 'sine'; g.gain.setValueAtTime(0.15, c.currentTime);
+      o.frequency.setValueAtTime(523, c.currentTime);
+      o.frequency.setValueAtTime(659, c.currentTime + 0.1);
+      o.frequency.setValueAtTime(784, c.currentTime + 0.2);
+      g.gain.exponentialRampToValueAtTime(0.01, c.currentTime + 0.5);
+      o.start(c.currentTime); o.stop(c.currentTime + 0.5);
+    })},
+
+    wrong() { play(c => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.connect(g); g.connect(c.destination);
+      o.type = 'square'; g.gain.setValueAtTime(0.08, c.currentTime);
+      o.frequency.setValueAtTime(200, c.currentTime);
+      o.frequency.setValueAtTime(150, c.currentTime + 0.15);
+      g.gain.exponentialRampToValueAtTime(0.01, c.currentTime + 0.3);
+      o.start(c.currentTime); o.stop(c.currentTime + 0.3);
+    })},
+
+    flip() { play(c => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.connect(g); g.connect(c.destination);
+      o.type = 'sine'; g.gain.setValueAtTime(0.08, c.currentTime);
+      o.frequency.setValueAtTime(400, c.currentTime);
+      o.frequency.exponentialRampToValueAtTime(800, c.currentTime + 0.12);
+      g.gain.exponentialRampToValueAtTime(0.01, c.currentTime + 0.15);
+      o.start(c.currentTime); o.stop(c.currentTime + 0.15);
+    })},
+
+    click() { play(c => {
+      const o = c.createOscillator(), g = c.createGain();
+      o.connect(g); g.connect(c.destination);
+      o.type = 'sine'; g.gain.setValueAtTime(0.06, c.currentTime);
+      o.frequency.setValueAtTime(600, c.currentTime);
+      g.gain.exponentialRampToValueAtTime(0.01, c.currentTime + 0.06);
+      o.start(c.currentTime); o.stop(c.currentTime + 0.06);
+    })},
+
+    levelUp() { play(c => {
+      const notes = [523, 659, 784, 1047];
+      notes.forEach((freq, i) => {
+        const o = c.createOscillator(), g = c.createGain();
+        o.connect(g); g.connect(c.destination);
+        o.type = 'sine'; g.gain.setValueAtTime(0.12, c.currentTime + i*0.12);
+        o.frequency.setValueAtTime(freq, c.currentTime + i*0.12);
+        g.gain.exponentialRampToValueAtTime(0.01, c.currentTime + i*0.12 + 0.3);
+        o.start(c.currentTime + i*0.12); o.stop(c.currentTime + i*0.12 + 0.3);
+      });
+    })},
+
+    fanfare() { play(c => {
+      const melody = [523, 659, 784, 659, 784, 1047];
+      melody.forEach((freq, i) => {
+        const o = c.createOscillator(), g = c.createGain();
+        o.connect(g); g.connect(c.destination);
+        o.type = 'triangle'; g.gain.setValueAtTime(0.12, c.currentTime + i*0.15);
+        o.frequency.setValueAtTime(freq, c.currentTime + i*0.15);
+        g.gain.exponentialRampToValueAtTime(0.01, c.currentTime + i*0.15 + 0.35);
+        o.start(c.currentTime + i*0.15); o.stop(c.currentTime + i*0.15 + 0.35);
+      });
+    })},
+
+    streak() { play(c => {
+      [262, 330, 392, 523].forEach((f, i) => {
+        const o = c.createOscillator(), g = c.createGain();
+        o.connect(g); g.connect(c.destination);
+        o.type = 'sine'; g.gain.setValueAtTime(0.1, c.currentTime + i*0.1);
+        o.frequency.setValueAtTime(f, c.currentTime + i*0.1);
+        g.gain.exponentialRampToValueAtTime(0.01, c.currentTime + i*0.1 + 0.4);
+        o.start(c.currentTime + i*0.1); o.stop(c.currentTime + i*0.1 + 0.4);
+      });
+    })},
+  };
+})();
+
+function toggleMute() {
+  const m = SFX.toggleMute();
+  document.getElementById('mute-btn').textContent = m ? '🔇' : '🔊';
+  saveProgress('muted', m);
+}
+
+// ═══════════════════════════════════════
+//  CELEBRATIONS
+// ═══════════════════════════════════════
+function showConfetti(count = 30) {
+  const colors = ['#AE1B28','#262261','#403C74','#22c55e','#f59e0b','#3b82f6'];
+  for (let i = 0; i < count; i++) {
+    const el = document.createElement('div');
+    el.className = 'confetti-piece';
+    el.style.left = Math.random() * 100 + 'vw';
+    el.style.width = (6 + Math.random()*6) + 'px';
+    el.style.height = (6 + Math.random()*6) + 'px';
+    el.style.background = colors[Math.floor(Math.random()*colors.length)];
+    el.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+    el.style.animationDuration = (2 + Math.random()*2) + 's';
+    el.style.animationDelay = Math.random()*0.5 + 's';
+    document.body.appendChild(el);
+    setTimeout(() => el.remove(), 4000);
+  }
+}
+
+function showToast(msg, duration = 2000) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), duration);
+}
+
+function showCelebration(emoji, title, subtitle, callback) {
+  const overlay = document.createElement('div');
+  overlay.className = 'celebration-overlay';
+  overlay.innerHTML = `
+    <div class="celebration-card">
+      <div style="font-size:64px;margin-bottom:12px">${emoji}</div>
+      <div style="font-size:22px;font-weight:800;color:var(--navy);margin-bottom:8px">${title}</div>
+      <div style="font-size:14px;color:var(--muted);margin-bottom:20px">${subtitle}</div>
+      <button class="btn btn-primary" style="width:100%" onclick="this.closest('.celebration-overlay').remove();${callback || ''}">המשך</button>
+    </div>`;
+  document.body.appendChild(overlay);
+  SFX.fanfare();
+  showConfetti();
+}
+
+function progressRingSVG(pct, size=80, stroke=8, color='var(--red)') {
+  const r = (size - stroke) / 2;
+  const circ = 2 * Math.PI * r;
+  const offset = circ - (pct / 100) * circ;
+  return `<svg width="${size}" height="${size}" class="progress-ring">
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="#e8e8f4" stroke-width="${stroke}"/>
+    <circle cx="${size/2}" cy="${size/2}" r="${r}" fill="none" stroke="${color}" stroke-width="${stroke}"
+      class="progress-ring-circle" stroke-dasharray="${circ}" stroke-dashoffset="${offset}"/>
+  </svg>`;
+}
+
+// ═══════════════════════════════════════
+//  FLATTEN WORDS_DB
+// ═══════════════════════════════════════
 const WORDS = {};
 const LEVEL_META = {
-  A1: { label: 'A1 מתחיל', color: '#22c55e' },
-  A2: { label: 'A2 בסיסי', color: '#3b82f6' },
-  B1: { label: 'B1 בינוני', color: '#f59e0b' },
-  B2: { label: 'B2 מתקדם', color: '#AE1B28' },
+  A1: { label: 'A1 מתחיל', color: '#22c55e', bg: '#f0fdf4' },
+  A2: { label: 'A2 בסיסי', color: '#3b82f6', bg: '#eff6ff' },
+  B1: { label: 'B1 בינוני', color: '#f59e0b', bg: '#fffbeb' },
+  B2: { label: 'B2 מתקדם', color: '#AE1B28', bg: '#fef2f2' },
 };
-
-// Flatten: WORDS_DB.A1.greetings -> WORDS['A1_greetings']
 if (typeof WORDS_DB !== 'undefined') {
   for (const level of Object.keys(WORDS_DB)) {
     for (const [catKey, catData] of Object.entries(WORDS_DB[level])) {
@@ -131,158 +439,163 @@ const SERIES = {
   romance: {
     title: "רומנטיקה", icon: "❤️", color: "#AE1B28",
     words: [
-      { tr: "Aşk",              he: "אהבה",              pron: "אַשְׁק" },
-      { tr: "Sevgi",            he: "חיבה / אהבה רכה",  pron: "סֶבְגִי" },
-      { tr: "Kalp",             he: "לב",                pron: "קַלְפּ" },
-      { tr: "Özlem",            he: "געגוע",             pron: "אֶזְלֶם" },
-      { tr: "Öpücük",           he: "נשיקה",             pron: "אֶפּיוּג'יוּק" },
-      { tr: "Sarılmak",         he: "לחבק",              pron: "סַרִילְמַק" },
-      { tr: "Seni seviyorum",   he: "אני אוהב/ת אותך",  pron: "סֶנִי סֶבִיוֹרוּם" },
-      { tr: "Aşık oldum",       he: "התאהבתי",           pron: "אַשִׁיק אוֹלְדוּם" },
-      { tr: "Güzel",            he: "יפה",               pron: "גיוּזֶל" },
-      { tr: "Harika",           he: "מדהים",             pron: "חַרִיקַה" },
-      { tr: "Birlikte",         he: "ביחד",              pron: "בִּירְלִיקְטֶה" },
-      { tr: "Sonsuza dek",      he: "לנצח",              pron: "סוֹנְסוּזַה דֶק" },
+      { tr: "Aşk", he: "אהבה", pron: "אַשְׁק" },
+      { tr: "Sevgi", he: "חיבה / אהבה רכה", pron: "סֶבְגִי" },
+      { tr: "Kalp", he: "לב", pron: "קַלְפּ" },
+      { tr: "Özlem", he: "געגוע", pron: "אֶזְלֶם" },
+      { tr: "Öpücük", he: "נשיקה", pron: "אֶפּיוּג'יוּק" },
+      { tr: "Sarılmak", he: "לחבק", pron: "סַרִילְמַק" },
+      { tr: "Seni seviyorum", he: "אני אוהב/ת אותך", pron: "סֶנִי סֶבִיוֹרוּם" },
+      { tr: "Aşık oldum", he: "התאהבתי", pron: "אַשִׁיק אוֹלְדוּם" },
+      { tr: "Güzel", he: "יפה", pron: "גיוּזֶל" },
+      { tr: "Harika", he: "מדהים", pron: "חַרִיקַה" },
+      { tr: "Birlikte", he: "ביחד", pron: "בִּירְלִיקְטֶה" },
+      { tr: "Sonsuza dek", he: "לנצח", pron: "סוֹנְסוּזַה דֶק" },
     ]
   },
   anger: {
     title: "כעס ועימות", icon: "😡", color: "#7c1a1a",
     words: [
-      { tr: "Yeter!",           he: "מספיק! / די!",      pron: "יֶטֶר" },
-      { tr: "Bırak beni!",      he: "עזוב/י אותי!",     pron: "בִּירַק בֶּנִי" },
-      { tr: "Yalan söylüyorsun!", he: "אתה משקר!",       pron: "יַלַן סֶיְלִיוֹרְסוּן" },
-      { tr: "İhanet",           he: "בגידה",             pron: "אִיחַנֶט" },
-      { tr: "Neden?",           he: "למה?",              pron: "נֶדֶן" },
-      { tr: "Haksızsın",        he: "אתה לא צודק",      pron: "חַקְסִיזְסִין" },
-      { tr: "Kızgınım",         he: "אני כועס/ת",       pron: "קִיזְגִינִים" },
-      { tr: "Deli misin?",      he: "אתה/את משוגע/ת?",  pron: "דֶלִי מִיסִין" },
-      { tr: "Çık git!",         he: "צא/צאי מפה!",      pron: "צ'ִיק גִּיט" },
-      { tr: "Hiç inanmıyorum",  he: "אני בכלל לא מאמין/ה", pron: "חִיץ' אִינַנְמִיוֹרוּם" },
-      { tr: "Bu kadar!",        he: "זהו! / עד כאן!",   pron: "בּוּ קַדַר" },
-      { tr: "Utanmıyor musun?", he: "לא מתבייש/ת?",     pron: "אוּטַנְמִיוֹר מוּסוּן" },
+      { tr: "Yeter!", he: "מספיק! / די!", pron: "יֶטֶר" },
+      { tr: "Bırak beni!", he: "עזוב/י אותי!", pron: "בִּירַק בֶּנִי" },
+      { tr: "Yalan söylüyorsun!", he: "אתה משקר!", pron: "יַלַן סֶיְלִיוֹרְסוּן" },
+      { tr: "İhanet", he: "בגידה", pron: "אִיחַנֶט" },
+      { tr: "Neden?", he: "למה?", pron: "נֶדֶן" },
+      { tr: "Haksızsın", he: "אתה לא צודק", pron: "חַקְסִיזְסִין" },
+      { tr: "Kızgınım", he: "אני כועס/ת", pron: "קִיזְגִינִים" },
+      { tr: "Deli misin?", he: "אתה/את משוגע/ת?", pron: "דֶלִי מִיסִין" },
+      { tr: "Çık git!", he: "צא/צאי מפה!", pron: "צ'ִיק גִּיט" },
+      { tr: "Hiç inanmıyorum", he: "אני בכלל לא מאמין/ה", pron: "חִיץ' אִינַנְמִיוֹרוּם" },
+      { tr: "Bu kadar!", he: "זהו! / עד כאן!", pron: "בּוּ קַדַר" },
+      { tr: "Utanmıyor musun?", he: "לא מתבייש/ת?", pron: "אוּטַנְמִיוֹר מוּסוּן" },
     ]
   },
   jealousy: {
     title: "קנאה וחשד", icon: "👁️", color: "#403C74",
     words: [
-      { tr: "Kıskançlık",       he: "קנאה",              pron: "קִישְׁקַנְץ'ְלִיק" },
-      { tr: "Kıskanıyorum",     he: "אני מקנא/ת",       pron: "קִישְׁקַנִיוֹרוּם" },
-      { tr: "Şüphe",            he: "חשד",               pron: "שיוּפֶּה" },
-      { tr: "Güvenmiyorum",     he: "אני לא סומך/ת",    pron: "גיוּבֶנְמִיוֹרוּם" },
-      { tr: "Kim o?",           he: "מי זה/זאת?",        pron: "קִים אוֹ" },
-      { tr: "Neredeydin?",      he: "איפה היית?",        pron: "נֶרֶדֶיְדִין" },
-      { tr: "Kimle konuştun?",  he: "עם מי דיברת?",     pron: "קִימְלֶה קוֹנוּשְׁטוּן" },
-      { tr: "Açıkla bana",      he: "תסביר/י לי",       pron: "אַצ'ִיקְלַה בַּנַה" },
-      { tr: "Gizli bir şey mi?", he: "יש סוד?",          pron: "גִּיזְלִי בִּיר שֵׁיְ מִי" },
-      { tr: "Doğruyu söyle",    he: "תגיד/י את האמת",   pron: "דוֹגְ'רוּיוּ סֶיְלֶה" },
-      { tr: "İnanmıyorum sana", he: "אני לא מאמין/ה לך",pron: "אִינַנְמִיוֹרוּם סַנַה" },
+      { tr: "Kıskançlık", he: "קנאה", pron: "קִישְׁקַנְץ'ְלִיק" },
+      { tr: "Kıskanıyorum", he: "אני מקנא/ת", pron: "קִישְׁקַנִיוֹרוּם" },
+      { tr: "Şüphe", he: "חשד", pron: "שיוּפֶּה" },
+      { tr: "Güvenmiyorum", he: "אני לא סומך/ת", pron: "גיוּבֶנְמִיוֹרוּם" },
+      { tr: "Kim o?", he: "מי זה/זאת?", pron: "קִים אוֹ" },
+      { tr: "Neredeydin?", he: "איפה היית?", pron: "נֶרֶדֶיְדִין" },
+      { tr: "Kimle konuştun?", he: "עם מי דיברת?", pron: "קִימְלֶה קוֹנוּשְׁטוּן" },
+      { tr: "Açıkla bana", he: "תסביר/י לי", pron: "אַצ'ִיקְלַה בַּנַה" },
+      { tr: "Gizli bir şey mi?", he: "יש סוד?", pron: "גִּיזְלִי בִּיר שֵׁיְ מִי" },
+      { tr: "Doğruyu söyle", he: "תגיד/י את האמת", pron: "דוֹגְ'רוּיוּ סֶיְלֶה" },
+      { tr: "İnanmıyorum sana", he: "אני לא מאמין/ה לך", pron: "אִינַנְמִיוֹרוּם סַנַה" },
       { tr: "Beni aldatıyor musun?", he: "אתה בוגד/ת בי?", pron: "בֶּנִי אַלְדַטִיוֹר מוּסוּן" },
     ]
   },
   breakup: {
     title: "פרידה וכאב", icon: "💔", color: "#6b2737",
     words: [
-      { tr: "Bitti",            he: "נגמר",              pron: "בִּיטִי" },
-      { tr: "Artık olamayız",   he: "כבר לא נוכל להיות יחד", pron: "אַרְטִיק אוֹלַמַיִיז" },
-      { tr: "Acıyor",           he: "כואב",              pron: "אַג'ִיוֹר" },
-      { tr: "Yalnızım",         he: "אני לבד",           pron: "יַלְנִיזִים" },
-      { tr: "Seni özlüyorum",   he: "אני מתגעגע/ת אליך", pron: "סֶנִי אֶזְליוּיוֹרוּם" },
-      { tr: "Gitme",            he: "אל תלך/תלכי",      pron: "גִּיטְמֶה" },
+      { tr: "Bitti", he: "נגמר", pron: "בִּיטִי" },
+      { tr: "Artık olamayız", he: "כבר לא נוכל להיות יחד", pron: "אַרְטִיק אוֹלַמַיִיז" },
+      { tr: "Acıyor", he: "כואב", pron: "אַג'ִיוֹר" },
+      { tr: "Yalnızım", he: "אני לבד", pron: "יַלְנִיזִים" },
+      { tr: "Seni özlüyorum", he: "אני מתגעגע/ת אליך", pron: "סֶנִי אֶזְליוּיוֹרוּם" },
+      { tr: "Gitme", he: "אל תלך/תלכי", pron: "גִּיטְמֶה" },
       { tr: "Neden gidiyorsun?", he: "למה אתה/את הולך/ת?", pron: "נֶדֶן גִּידִיוֹרְסוּן" },
-      { tr: "Çok üzgünüm",      he: "אני מאוד עצוב/ה",  pron: "צ'וֹק אוּזְגיוּניוּם" },
-      { tr: "Vazgeçiyorum",     he: "אני מוותר/ת",      pron: "וַזְגֶצ'ִיוֹרוּם" },
+      { tr: "Çok üzgünüm", he: "אני מאוד עצוב/ה", pron: "צ'וֹק אוּזְגיוּניוּם" },
+      { tr: "Vazgeçiyorum", he: "אני מוותר/ת", pron: "וַזְגֶצ'ִיוֹרוּם" },
       { tr: "Boşanmak istiyorum", he: "אני רוצה להתגרש", pron: "בּוֹשַׁנְמַק אִיסְטִיוֹרוּם" },
-      { tr: "Her şey değişti",  he: "הכל השתנה",        pron: "חֶר שֵׁיְ דֶגִ'ישְׁטִי" },
+      { tr: "Her şey değişti", he: "הכל השתנה", pron: "חֶר שֵׁיְ דֶגִ'ישְׁטִי" },
       { tr: "Artık sevmiyorum", he: "אני כבר לא אוהב/ת", pron: "אַרְטִיק סֶבְמִיוֹרוּם" },
     ]
   },
   reconcile: {
     title: "פיוס וסליחה", icon: "🤝", color: "#1a6b3a",
     words: [
-      { tr: "Özür dilerim",     he: "אני מצטער/ת",      pron: "אֶזְיוּר דִּילֶרִים" },
-      { tr: "Affet beni",       he: "תסלח/י לי",        pron: "אַפֶּט בֶּנִי" },
-      { tr: "Hata yaptım",      he: "טעיתי",             pron: "חַטַה יַפְּטִים" },
-      { tr: "Bir şans ver",     he: "תן/תני לי הזדמנות", pron: "בִּיר שַׁנְס וֶר" },
-      { tr: "Değişeceğim",      he: "אשתנה",             pron: "דֶגִ'ישֶׁג'ֶגִ'ִים" },
+      { tr: "Özür dilerim", he: "אני מצטער/ת", pron: "אֶזְיוּר דִּילֶרִים" },
+      { tr: "Affet beni", he: "תסלח/י לי", pron: "אַפֶּט בֶּנִי" },
+      { tr: "Hata yaptım", he: "טעיתי", pron: "חַטַה יַפְּטִים" },
+      { tr: "Bir şans ver", he: "תן/תני לי הזדמנות", pron: "בִּיר שַׁנְס וֶר" },
+      { tr: "Değişeceğim", he: "אשתנה", pron: "דֶגִ'ישֶׁג'ֶגִ'ִים" },
       { tr: "Seni hâlâ seviyorum", he: "אני עדיין אוהב/ת אותך", pron: "סֶנִי הַאלַא סֶבִיוֹרוּם" },
-      { tr: "Geri gel",         he: "חזור/חזרי",        pron: "גֶרִי גֶל" },
-      { tr: "Beraber olalım",   he: "בואו נהיה ביחד",   pron: "בֶּרַבֶּר אוֹלַלִים" },
+      { tr: "Geri gel", he: "חזור/חזרי", pron: "גֶרִי גֶל" },
+      { tr: "Beraber olalım", he: "בואו נהיה ביחד", pron: "בֶּרַבֶּר אוֹלַלִים" },
       { tr: "Seni kaybetmek istemiyorum", he: "אני לא רוצה לאבד אותך", pron: "סֶנִי קַיְבֶּטְמֶק אִיסְטֶמִיוֹרוּם" },
-      { tr: "Barışalım mı?",    he: "נתפייס?",           pron: "בַּרִישַׁלִים מִי" },
-      { tr: "Yeniden başlayalım", he: "נתחיל מחדש",     pron: "יֶנִידֶן בַּשְׁלַיַלִים" },
-      { tr: "Güveniyorum sana", he: "אני סומך/ת עליך",  pron: "גיוּבֶנִיוֹרוּם סַנַה" },
+      { tr: "Barışalım mı?", he: "נתפייס?", pron: "בַּרִישַׁלִים מִי" },
+      { tr: "Yeniden başlayalım", he: "נתחיל מחדש", pron: "יֶנִידֶן בַּשְׁלַיַלִים" },
+      { tr: "Güveniyorum sana", he: "אני סומך/ת עליך", pron: "גיוּבֶנִיוֹרוּם סַנַה" },
     ]
   },
   family: {
     title: "משפחה ודרמה", icon: "👨‍👩‍👧", color: "#7a5c00",
     words: [
-      { tr: "Aile",             he: "משפחה",             pron: "אַאִילֶה" },
-      { tr: "Anne",             he: "אמא",               pron: "אַנֶּה" },
-      { tr: "Baba",             he: "אבא",               pron: "בַּבַּה" },
-      { tr: "Kardeş",           he: "אח / אחות",         pron: "קַרְדֶש" },
-      { tr: "Onur",             he: "כבוד / שם טוב",     pron: "אוֹנוּר" },
-      { tr: "Gelenek",          he: "מסורת",             pron: "גֶלֶנֶק" },
-      { tr: "Yükümlülük",       he: "חובה / מחויבות",    pron: "יוּקיוּמְליוּליוּק" },
-      { tr: "Miras",            he: "ירושה",             pron: "מִירַס" },
-      { tr: "Kader",            he: "גורל",              pron: "קַדֶר" },
-      { tr: "Yemin",            he: "שבועה",             pron: "יֶמִין" },
-      { tr: "İntikam",          he: "נקמה",              pron: "אִינְטִיקַם" },
-      { tr: "Adalet",           he: "צדק",               pron: "עַדַאלֶט" },
+      { tr: "Aile", he: "משפחה", pron: "אַאִילֶה" },
+      { tr: "Anne", he: "אמא", pron: "אַנֶּה" },
+      { tr: "Baba", he: "אבא", pron: "בַּבַּה" },
+      { tr: "Kardeş", he: "אח / אחות", pron: "קַרְדֶש" },
+      { tr: "Onur", he: "כבוד / שם טוב", pron: "אוֹנוּר" },
+      { tr: "Gelenek", he: "מסורת", pron: "גֶלֶנֶק" },
+      { tr: "Yükümlülük", he: "חובה / מחויבות", pron: "יוּקיוּמְליוּליוּק" },
+      { tr: "Miras", he: "ירושה", pron: "מִירַס" },
+      { tr: "Kader", he: "גורל", pron: "קַדֶר" },
+      { tr: "Yemin", he: "שבועה", pron: "יֶמִין" },
+      { tr: "İntikam", he: "נקמה", pron: "אִינְטִיקַם" },
+      { tr: "Adalet", he: "צדק", pron: "עַדַאלֶט" },
     ]
   },
   power: {
     title: "כוח ועסקים", icon: "💼", color: "#1a3d6b",
     words: [
-      { tr: "Güç",              he: "כוח",               pron: "גיוּץ'" },
-      { tr: "İş dünyası",       he: "עולם העסקים",       pron: "אִיש דיוּנְיַאסִי" },
-      { tr: "Tehdit",           he: "איום",              pron: "טֶחְדִיט" },
-      { tr: "Söz veriyorum",    he: "אני מבטיח/ה",      pron: "סֶז וֶרִיוֹרוּם" },
-      { tr: "Anlaşma",          he: "עסקה / הסכם",      pron: "אַנְלַשְׁמַה" },
-      { tr: "Kontrol",          he: "שליטה / בקרה",      pron: "קוֹנְטְרוֹל" },
-      { tr: "Karar",            he: "החלטה",             pron: "קַרַר" },
-      { tr: "Ortak",            he: "שותף",              pron: "אוֹרְטַק" },
-      { tr: "Rakip",            he: "מתחרה",             pron: "רַקִיפּ" },
-      { tr: "Zafer",            he: "ניצחון",            pron: "זַפֶר" },
-      { tr: "Başarı",           he: "הצלחה",             pron: "בַּשַׁרִי" },
-      { tr: "Hırs",             he: "שאפתנות / תאווה",  pron: "חִירְס" },
+      { tr: "Güç", he: "כוח", pron: "גיוּץ'" },
+      { tr: "İş dünyası", he: "עולם העסקים", pron: "אִיש דיוּנְיַאסִי" },
+      { tr: "Tehdit", he: "איום", pron: "טֶחְדִיט" },
+      { tr: "Söz veriyorum", he: "אני מבטיח/ה", pron: "סֶז וֶרִיוֹרוּם" },
+      { tr: "Anlaşma", he: "עסקה / הסכם", pron: "אַנְלַשְׁמַה" },
+      { tr: "Kontrol", he: "שליטה / בקרה", pron: "קוֹנְטְרוֹל" },
+      { tr: "Karar", he: "החלטה", pron: "קַרַר" },
+      { tr: "Ortak", he: "שותף", pron: "אוֹרְטַק" },
+      { tr: "Rakip", he: "מתחרה", pron: "רַקִיפּ" },
+      { tr: "Zafer", he: "ניצחון", pron: "זַפֶר" },
+      { tr: "Başarı", he: "הצלחה", pron: "בַּשַׁרִי" },
+      { tr: "Hırs", he: "שאפתנות / תאווה", pron: "חִירְס" },
     ]
   },
   feelings: {
     title: "רגשות עמוקים", icon: "😢", color: "#4a3060",
     words: [
-      { tr: "Ağlamak",          he: "לבכות",             pron: "אַגְ'לַמַק" },
-      { tr: "Acı",              he: "כאב / סבל",         pron: "אַג'ִי" },
-      { tr: "Yalnızlık",        he: "בדידות",            pron: "יַלְנִיזְלִיק" },
-      { tr: "Umut",             he: "תקווה",             pron: "אוּמוּט" },
-      { tr: "Korku",            he: "פחד",               pron: "קוֹרְקוּ" },
-      { tr: "Mutluluk",         he: "אושר / שמחה",      pron: "מוּטְלוּלוּק" },
-      { tr: "Hüzün",            he: "עצב / מרמלנה",     pron: "חיוּזיוּן" },
-      { tr: "Öfke",             he: "זעם",               pron: "אֶפְקֶה" },
-      { tr: "Şaşkınlık",        he: "הפתעה / פליאה",    pron: "שַׁשְׁקִינְלִיק" },
-      { tr: "Pişmanlık",        he: "חרטה",              pron: "פִּישְׁמַנְלִיק" },
-      { tr: "Kırgınlık",        he: "עלבון / אכזבה",    pron: "קִירְגִינְלִיק" },
-      { tr: "Hayal kırıklığı",  he: "אכזבה",             pron: "חַיַל קִירִיקְלִיגִי" },
+      { tr: "Ağlamak", he: "לבכות", pron: "אַגְ'לַמַק" },
+      { tr: "Acı", he: "כאב / סבל", pron: "אַג'ִי" },
+      { tr: "Yalnızlık", he: "בדידות", pron: "יַלְנִיזְלִיק" },
+      { tr: "Umut", he: "תקווה", pron: "אוּמוּט" },
+      { tr: "Korku", he: "פחד", pron: "קוֹרְקוּ" },
+      { tr: "Mutluluk", he: "אושר / שמחה", pron: "מוּטְלוּלוּק" },
+      { tr: "Hüzün", he: "עצב / מרמלנה", pron: "חיוּזיוּן" },
+      { tr: "Öfke", he: "זעם", pron: "אֶפְקֶה" },
+      { tr: "Şaşkınlık", he: "הפתעה / פליאה", pron: "שַׁשְׁקִינְלִיק" },
+      { tr: "Pişmanlık", he: "חרטה", pron: "פִּישְׁמַנְלִיק" },
+      { tr: "Kırgınlık", he: "עלבון / אכזבה", pron: "קִירְגִינְלִיק" },
+      { tr: "Hayal kırıklığı", he: "אכזבה", pron: "חַיַל קִירִיקְלִיגִי" },
     ]
   }
 };
 
-// ─── STATE ───
+// ═══════════════════════════════════════
+//  STATE
+// ═══════════════════════════════════════
 const state = {
   screen: 'home',
   selectedLevel: 'A1',
   flashIdx: 0,
   flashCategory: null,
-  flashSource: 'lessons', // 'lessons' or 'series'
+  flashSource: 'lessons',
   quizIdx: 0,
   quizAnswered: false,
   quizScore: 0,
   quizTotal: 0,
+  quizCorrectStreak: 0,
   seriesCategory: null,
   elevenlabsKey: '',
   elevenlabsAgentId: '',
 };
 
-// ─── PROGRESS (localStorage) ───
+// ═══════════════════════════════════════
+//  PROGRESS & ENGAGEMENT (localStorage)
+// ═══════════════════════════════════════
 function getProgress() {
   try { return JSON.parse(localStorage.getItem('alicecool_progress') || '{}'); } catch { return {}; }
 }
@@ -290,29 +603,210 @@ function saveProgress(key, val) {
   const p = getProgress(); p[key] = val; localStorage.setItem('alicecool_progress', JSON.stringify(p));
 }
 function addXP(n) {
-  const p = getProgress(); p.xp = (p.xp || 0) + n; localStorage.setItem('alicecool_progress', JSON.stringify(p));
+  const p = getProgress();
+  const oldXP = p.xp || 0;
+  p.xp = oldXP + n;
+  localStorage.setItem('alicecool_progress', JSON.stringify(p));
+  // Check level up
+  const levels = [0,100,300,600,1000,1500,2500,4000];
+  const oldLevel = levels.filter(l => oldXP >= l).length;
+  const newLevel = levels.filter(l => p.xp >= l).length;
+  if (newLevel > oldLevel) {
+    setTimeout(() => {
+      SFX.levelUp();
+      showCelebration('🎉', 'עלית רמה!', `הגעת ל-${p.xp} XP`, '');
+    }, 500);
+  }
+  return n;
 }
+
+// Daily goal
+function getDailyGoal() {
+  const p = getProgress();
+  const today = new Date().toDateString();
+  if (p.dailyGoalDate !== today) {
+    p.dailyGoalDate = today;
+    p.dailyWordsToday = 0;
+    p.dailyGoalMet = false;
+    localStorage.setItem('alicecool_progress', JSON.stringify(p));
+  }
+  return { words: p.dailyWordsToday || 0, goal: 10, met: p.dailyGoalMet || false };
+}
+function addDailyWord(count = 1) {
+  const p = getProgress();
+  const today = new Date().toDateString();
+  if (p.dailyGoalDate !== today) { p.dailyGoalDate = today; p.dailyWordsToday = 0; p.dailyGoalMet = false; }
+  p.dailyWordsToday = (p.dailyWordsToday || 0) + count;
+  if (p.dailyWordsToday >= 10 && !p.dailyGoalMet) {
+    p.dailyGoalMet = true;
+    localStorage.setItem('alicecool_progress', JSON.stringify(p));
+    setTimeout(() => {
+      showCelebration('🎯', 'יעד יומי הושלם!', 'למדת 10 מילים היום! +50 XP בונוס', '');
+      addXP(50);
+    }, 600);
+  } else {
+    localStorage.setItem('alicecool_progress', JSON.stringify(p));
+  }
+}
+
+// Streak
 function updateStreak() {
   const p = getProgress();
   const today = new Date().toDateString();
   if (p.lastDay !== today) {
     const yesterday = new Date(Date.now() - 86400000).toDateString();
-    p.streak = (p.lastDay === yesterday) ? (p.streak || 0) + 1 : 1;
+    if (p.lastDay === yesterday) {
+      p.streak = (p.streak || 0) + 1;
+    } else if (p.streakFreeze && p.lastDay) {
+      // Use streak freeze
+      p.streak = p.streak || 1;
+      p.streakFreeze = false;
+      showToast('🧊 השתמשת ב-Streak Freeze! הרצף נשמר');
+    } else {
+      if ((p.streak || 0) >= 3) {
+        showToast(`💔 הרצף של ${p.streak} ימים אבד...`);
+      }
+      p.streak = 1;
+    }
     p.lastDay = today;
     localStorage.setItem('alicecool_progress', JSON.stringify(p));
   }
 }
 updateStreak();
 
-// ─── ROUTER ───
+// Word strength (spaced repetition)
+function getWordStrength(wordKey) {
+  const p = getProgress();
+  const ws = p.wordStrength || {};
+  return ws[wordKey] || { level: 0, lastSeen: 0 };
+}
+function updateWordStrength(wordKey, correct) {
+  const p = getProgress();
+  if (!p.wordStrength) p.wordStrength = {};
+  const ws = p.wordStrength[wordKey] || { level: 0, lastSeen: 0 };
+  ws.level = correct ? Math.min(3, ws.level + 1) : Math.max(0, ws.level - 1);
+  ws.lastSeen = Date.now();
+  p.wordStrength[wordKey] = ws;
+  localStorage.setItem('alicecool_progress', JSON.stringify(p));
+}
+function getWeakWords() {
+  const p = getProgress();
+  const ws = p.wordStrength || {};
+  const weak = [];
+  const now = Date.now();
+  const dayMs = 86400000;
+  for (const [key, data] of Object.entries(ws)) {
+    // Decay: strength decreases over time
+    let effectiveLevel = data.level;
+    const daysSince = (now - data.lastSeen) / dayMs;
+    if (daysSince > 3) effectiveLevel = Math.max(0, effectiveLevel - 1);
+    if (daysSince > 7) effectiveLevel = 0;
+    if (effectiveLevel < 2) weak.push({ key, ...data, effectiveLevel });
+  }
+  return weak;
+}
+
+// Achievements
+const ALL_ACHIEVEMENTS = [
+  { id:'first_word', icon:'🌱', name:'צעד ראשון', desc:'למדת מילה ראשונה', check: p => (p.xp||0) >= 1 },
+  { id:'ten_words', icon:'📖', name:'לומד', desc:'למדת 10 מילים', check: p => (p.dailyWordsToday||0) >= 10 || (p.xp||0) >= 100 },
+  { id:'series_fan', icon:'🎬', name:'חובב סדרות', desc:'סיימת קטגוריית סדרות', check: p => Object.keys(p).some(k => k.startsWith('done_') && SERIES[k.replace('done_','')]) },
+  { id:'streak_3', icon:'🔥', name:'3 ימים ברצף', desc:'רצף של 3 ימים', check: p => (p.streak||0) >= 3 },
+  { id:'streak_7', icon:'💪', name:'שבוע שלם!', desc:'רצף של 7 ימים', check: p => (p.streak||0) >= 7 },
+  { id:'streak_30', icon:'⚡', name:'חודש מטורף', desc:'רצף של 30 ימים!', check: p => (p.streak||0) >= 30 },
+  { id:'xp_100', icon:'⭐', name:'100 XP', desc:'צברת 100 נקודות', check: p => (p.xp||0) >= 100 },
+  { id:'xp_500', icon:'🌟', name:'500 XP', desc:'צברת 500 נקודות', check: p => (p.xp||0) >= 500 },
+  { id:'xp_1000', icon:'💎', name:'1000 XP', desc:'צברת 1000 נקודות!', check: p => (p.xp||0) >= 1000 },
+  { id:'perfect_quiz', icon:'🏆', name:'מושלם!', desc:'100% במבחן', check: p => p.perfectQuiz },
+  { id:'five_cats', icon:'📚', name:'5 קטגוריות', desc:'סיימת 5 קטגוריות', check: p => Object.keys(p).filter(k => k.startsWith('done_') && p[k]).length >= 5 },
+  { id:'ten_cats', icon:'🎓', name:'10 קטגוריות', desc:'סיימת 10 קטגוריות', check: p => Object.keys(p).filter(k => k.startsWith('done_') && p[k]).length >= 10 },
+  { id:'twenty_cats', icon:'👑', name:'20 קטגוריות', desc:'סיימת 20 קטגוריות!', check: p => Object.keys(p).filter(k => k.startsWith('done_') && p[k]).length >= 20 },
+  { id:'chatty', icon:'💬', name:'שיחן', desc:'הפעלת את הבוט', check: p => !!p.elevenlabs_key },
+  { id:'freeze_used', icon:'🧊', name:'קרח!', desc:'השתמשת ב-Streak Freeze', check: p => p.usedFreeze },
+  { id:'night_owl', icon:'🦉', name:'ינשוף לילה', desc:'למדת אחרי 23:00', check: p => p.nightOwl },
+  { id:'early_bird', icon:'🐦', name:'ציפור מוקדמת', desc:'למדת לפני 7:00', check: p => p.earlyBird },
+  { id:'all_a1', icon:'🥉', name:'A1 מאסטר', desc:'סיימת את כל A1', check: p => { const a1cats = Object.keys(WORDS).filter(k => k.startsWith('A1_')); return a1cats.length > 0 && a1cats.every(k => p['done_'+k]); }},
+  { id:'review_master', icon:'🔄', name:'חזרה מושלמת', desc:'חזרת על 20 מילים חלשות', check: p => (p.reviewCount||0) >= 20 },
+];
+
+function checkAchievements() {
+  const p = getProgress();
+  if (!p.achievements) p.achievements = {};
+  // Check time-based
+  const hour = new Date().getHours();
+  if (hour >= 23 || hour < 4) { p.nightOwl = true; }
+  if (hour >= 4 && hour < 7) { p.earlyBird = true; }
+  localStorage.setItem('alicecool_progress', JSON.stringify(p));
+
+  for (const a of ALL_ACHIEVEMENTS) {
+    if (!p.achievements[a.id] && a.check(p)) {
+      p.achievements[a.id] = Date.now();
+      localStorage.setItem('alicecool_progress', JSON.stringify(p));
+      setTimeout(() => {
+        showCelebration(a.icon, 'עיטור חדש!', `${a.name} - ${a.desc}`, '');
+      }, 800);
+      return; // One at a time
+    }
+  }
+}
+
+// Social proof (simulated)
+function getActiveLearners() {
+  const hour = new Date().getHours();
+  const base = hour >= 8 && hour <= 22 ? 40 : 12;
+  return base + Math.floor(Math.random() * 20);
+}
+
+// Daily surprise
+function getDailySurprise() {
+  const tips = [
+    { icon:'💡', text:'בטורקית, "ş" נהגית כמו "ש", ו-"ç" כמו "צ\'"' },
+    { icon:'🇹🇷', text:'טורקיה היא הארץ היחידה שנמצאת בשני יבשות' },
+    { icon:'📝', text:'בטורקית אין מילים עם מין – אין "הוא" ו"היא", רק "o"' },
+    { icon:'🎵', text:'בטורקית מילים חדשות נבנות עם סיומות – כמו לגו!' },
+    { icon:'☕', text:'הקפה הטורקי הוא מורשת עולמית של UNESCO' },
+    { icon:'🌍', text:'טורקית היא השפה ה-5 הנפוצה באינטרנט' },
+    { icon:'🔤', text:'האות "ı" (ללא נקודה) היא ייחודית לטורקית' },
+    { icon:'🍦', text:'גלידה טורקית (dondurma) לא נמסה כי מכילה סחלב!' },
+  ];
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000);
+  return tips[dayOfYear % tips.length];
+}
+
+// Popular word of the day
+function getWordOfDay() {
+  const allWords = [];
+  for (const cat of Object.values(WORDS)) {
+    for (const w of cat.words) allWords.push(w);
+  }
+  const dayOfYear = Math.floor((Date.now() - new Date(new Date().getFullYear(),0,0)) / 86400000);
+  return allWords[dayOfYear % allWords.length];
+}
+
+// ═══════════════════════════════════════
+//  ROUTER
+// ═══════════════════════════════════════
 function navigate(screen, data = {}) {
+  SFX.click();
   state.screen = screen;
   Object.assign(state, data);
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   const navEl = document.getElementById('nav-' + screen);
   if (navEl) navEl.classList.add('active');
   render();
-  window.scrollTo(0, 0);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+  checkAchievements();
+}
+
+// ═══════════════════════════════════════
+//  TIME GREETING
+// ═══════════════════════════════════════
+function getGreeting() {
+  const h = new Date().getHours();
+  if (h >= 5 && h < 12) return 'בוקר טוב! ☀️';
+  if (h >= 12 && h < 17) return 'צהריים טובים! 🌤️';
+  if (h >= 17 && h < 21) return 'ערב טוב! 🌅';
+  return 'לילה טוב! 🌙';
 }
 
 // ══════════════════════════════════════
@@ -323,78 +817,140 @@ function renderHome() {
   const p = getProgress();
   const xp = p.xp || 0;
   const streak = p.streak || 1;
-  const completed = Object.keys(p).filter(k => k.startsWith('done_')).length;
-  const days = ['א', 'ב', 'ג', 'ד', 'ה', 'ו', 'ש'];
+  const completed = Object.keys(p).filter(k => k.startsWith('done_') && p[k]).length;
+  const daily = getDailyGoal();
+  const dailyPct = Math.min(100, Math.round((daily.words / daily.goal) * 100));
+  const surprise = getDailySurprise();
+  const wod = getWordOfDay();
+  const activeLearners = getActiveLearners();
+  const weakWords = getWeakWords();
+
+  const days = ['א','ב','ג','ד','ה','ו','ש'];
   const dayItems = days.map((d, i) => {
     const cls = i < streak - 1 ? 'streak-done' : i === Math.min(streak - 1, 6) ? 'streak-today' : 'streak-future';
     return `<div class="streak-day ${cls}">${d}</div>`;
   }).join('');
 
   return `
-  <div class="fade-in space-y-4">
+  <div class="fade-in" style="display:flex;flex-direction:column;gap:14px">
     <!-- HEADER -->
-    <div class="flex items-center justify-between mb-2">
+    <div style="display:flex;align-items:center;justify-content:space-between">
       <div>
-        <div style="font-size:11px;color:#888;font-weight:600;letter-spacing:1px">ALICECOOL</div>
-        <h1 style="font-size:22px;font-weight:800;color:#262261">טורקית בקלות 🇹🇷</h1>
+        <div style="font-size:14px;color:var(--muted);font-weight:500">${getGreeting()}</div>
+        <h1 style="font-size:24px;font-weight:900;color:var(--navy)">Alicecool</h1>
       </div>
       <img src="לוגו.png" alt="Alicecool" style="height:44px;object-fit:contain" onerror="this.style.display='none'">
     </div>
 
-    <!-- STREAK -->
-    <div class="card">
-      <div class="flex items-center justify-between mb-3">
-        <div>
-          <div style="font-size:13px;color:#888;font-weight:500">רצף יומי</div>
-          <div style="font-size:26px;font-weight:800;color:#AE1B28">🔥 ${streak} ימים</div>
-        </div>
-        <div style="text-align:center">
-          <div style="font-size:26px;font-weight:800;color:#262261">${xp}</div>
-          <div style="font-size:12px;color:#888">נקודות XP</div>
-        </div>
-      </div>
-      <div class="flex justify-between gap-1">${dayItems}</div>
+    <!-- SOCIAL PROOF -->
+    <div style="display:flex;align-items:center;gap:8px;padding:8px 14px;background:#f0fdf4;border-radius:12px">
+      <div style="width:8px;height:8px;border-radius:50%;background:#22c55e;animation:pulse 2s infinite"></div>
+      <span style="font-size:13px;color:#15803d;font-weight:600">${activeLearners} לומדים מחוברים עכשיו</span>
     </div>
 
-    <!-- QUICK START -->
-    <div class="card" style="background:linear-gradient(135deg,#262261,#403C74)">
-      <div style="color:#fff;font-size:18px;font-weight:700;margin-bottom:4px">המשך ללמוד 📖</div>
-      <div style="color:#c0c0e0;font-size:13px;margin-bottom:14px">ממשיכים מאיפה שעצרת</div>
-      <button class="btn-primary" onclick="navigate('lessons')" style="background:#AE1B28;width:100%">התחל שיעור</button>
-    </div>
-
-    <!-- CATEGORIES GRID -->
-    <div style="font-size:17px;font-weight:700;color:#262261;margin-top:4px">מה תרצה לתרגל?</div>
+    <!-- DAILY GOAL + STREAK -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <div class="card" style="cursor:pointer;border:2px solid #f0effa" onclick="navigate('lessons')">
-        <div style="font-size:28px">📚</div>
-        <div style="font-weight:700;color:#262261;margin-top:4px">שיעורים</div>
-        <div style="font-size:12px;color:#888">A1 → B2</div>
+      <!-- Daily Goal Ring -->
+      <div class="card card-hover" style="text-align:center;padding:16px" onclick="navigate('lessons')">
+        <div style="position:relative;display:inline-block">
+          ${progressRingSVG(dailyPct, 72, 7)}
+          <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--red)">
+            ${daily.met ? '🎯' : daily.words + '/' + daily.goal}
+          </div>
+        </div>
+        <div style="font-size:12px;font-weight:600;color:var(--navy);margin-top:6px">יעד יומי</div>
+        ${!daily.met && daily.words > 0 ? `<div style="font-size:11px;color:var(--muted)">עוד ${daily.goal - daily.words} מילים!</div>` : ''}
+        ${daily.met ? `<div style="font-size:11px;color:var(--success);font-weight:700">הושלם!</div>` : ''}
       </div>
-      <div class="card" style="cursor:pointer;border:2px solid #fde8ea" onclick="navigate('series')">
-        <div style="font-size:28px">🎬</div>
-        <div style="font-weight:700;color:#AE1B28;margin-top:4px">מילות סדרות</div>
-        <div style="font-size:12px;color:#888">8 קטגוריות</div>
-      </div>
-      <div class="card" style="cursor:pointer;border:2px solid #e8f5e9" onclick="navigate('chat')">
-        <div style="font-size:28px">🎙️</div>
-        <div style="font-weight:700;color:#1a6b3a;margin-top:4px">שיחה עם בוט</div>
-        <div style="font-size:12px;color:#888">ElevenLabs AI</div>
-      </div>
-      <div class="card" style="cursor:pointer;border:2px solid #f0effa" onclick="navigate('profile')">
-        <div style="font-size:28px">📊</div>
-        <div style="font-weight:700;color:#403C74;margin-top:4px">ההתקדמות שלי</div>
-        <div style="font-size:12px;color:#888">${completed} קטגוריות הושלמו</div>
+
+      <!-- Streak -->
+      <div class="card card-hover" style="text-align:center;padding:16px">
+        <div style="font-size:36px;${streak >= 3 ? 'animation:fire 1.5s ease infinite;' : ''}">${streak >= 7 ? '🔥' : streak >= 3 ? '🔥' : '✨'}</div>
+        <div style="font-size:22px;font-weight:900;color:var(--red)">${streak}</div>
+        <div style="font-size:12px;font-weight:600;color:var(--navy)">ימי רצף</div>
+        ${streak >= 3 ? `<div style="font-size:11px;color:var(--muted)">אל תשבור!</div>` : ''}
       </div>
     </div>
 
-    <!-- TIP -->
-    <div class="card" style="background:#fffbea;border:1px solid #fde68a">
-      <div style="font-size:13px;font-weight:600;color:#92400e">💡 טיפ יומי</div>
-      <div style="font-size:13px;color:#78350f;margin-top:4px">
-        בטורקית, האות <strong>ş</strong> נהגית כמו "ש", ו-<strong>ç</strong> כמו "צ'".
-        האות <strong>ı</strong> (ללא נקודה) היא צליל שאין בעברית – משהו בין "אִ" ל-"ה".
+    <!-- STREAK DAYS -->
+    <div class="card" style="padding:12px 16px">
+      <div style="display:flex;justify-content:space-between;gap:4px">${dayItems}</div>
+    </div>
+
+    <!-- CONTINUE LEARNING -->
+    <div class="card card-hover" style="background:linear-gradient(135deg,var(--navy),var(--purple));cursor:pointer" onclick="navigate('lessons')">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="color:#fff;font-size:18px;font-weight:800">המשך ללמוד</div>
+          <div style="color:#b0b0d0;font-size:13px;margin-top:4px">${completed} קטגוריות הושלמו</div>
+        </div>
+        <div style="font-size:36px">📚</div>
       </div>
+      <div style="margin-top:12px">
+        <div class="progress-bar" style="background:rgba(255,255,255,0.15)">
+          <div class="progress-fill" style="width:${Math.round(completed/(Object.keys(WORDS).length+Object.keys(SERIES).length)*100)}%;background:linear-gradient(90deg,#AE1B28,#f59e0b)"></div>
+        </div>
+      </div>
+    </div>
+
+    ${weakWords.length > 0 ? `
+    <!-- WEAK WORDS ALERT -->
+    <div class="card card-hover" style="border:2px solid #fde68a;background:#fffbea;cursor:pointer" onclick="navigate('review')">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:28px">🔄</div>
+        <div style="flex:1">
+          <div style="font-weight:700;color:#92400e">מילים לחזרה</div>
+          <div style="font-size:13px;color:#a16207">${weakWords.length} מילים צריכות חיזוק</div>
+        </div>
+        <div style="font-size:18px;color:#a16207">›</div>
+      </div>
+    </div>` : ''}
+
+    <!-- QUICK ACTIONS -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="card card-hover" style="cursor:pointer;text-align:center;padding:20px 12px" onclick="navigate('lessons')">
+        <div style="font-size:32px;margin-bottom:6px">📚</div>
+        <div style="font-weight:700;color:var(--navy);font-size:14px">שיעורים</div>
+        <div style="font-size:12px;color:var(--muted)">${Object.keys(WORDS).length} קטגוריות</div>
+      </div>
+      <div class="card card-hover" style="cursor:pointer;text-align:center;padding:20px 12px" onclick="navigate('series')">
+        <div style="font-size:32px;margin-bottom:6px">🎬</div>
+        <div style="font-weight:700;color:var(--red);font-size:14px">מילות סדרות</div>
+        <div style="font-size:12px;color:var(--muted)">8 קטגוריות</div>
+      </div>
+      <div class="card card-hover" style="cursor:pointer;text-align:center;padding:20px 12px" onclick="navigate('chat')">
+        <div style="font-size:32px;margin-bottom:6px">🎙️</div>
+        <div style="font-weight:700;color:#1a6b3a;font-size:14px">שיחה עם בוט</div>
+        <div style="font-size:12px;color:var(--muted)">ElevenLabs AI</div>
+      </div>
+      <div class="card card-hover" style="cursor:pointer;text-align:center;padding:20px 12px" onclick="navigate('profile')">
+        <div style="font-size:32px;margin-bottom:6px">📊</div>
+        <div style="font-weight:700;color:var(--purple);font-size:14px">התקדמות</div>
+        <div style="font-size:12px;color:var(--muted)">${xp} XP</div>
+      </div>
+    </div>
+
+    <!-- WORD OF THE DAY -->
+    <div class="card" style="border-right:4px solid var(--red)">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:8px">🌟 מילה של היום</div>
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div style="font-size:22px;font-weight:800;color:var(--navy)">${wod.tr}</div>
+          <div style="font-size:13px;color:var(--muted);margin-top:2px">${wod.pron}</div>
+        </div>
+        <div style="font-size:18px;font-weight:700;color:var(--red)">${wod.he}</div>
+      </div>
+    </div>
+
+    <!-- DAILY TIP -->
+    <div class="card" style="background:#f8f7ff;border:1px solid #e8e8f4">
+      <div style="font-size:13px;font-weight:700;color:var(--purple);margin-bottom:4px">${surprise.icon} הידעת?</div>
+      <div style="font-size:13px;color:#555;line-height:1.6">${surprise.text}</div>
+    </div>
+
+    <!-- XP BAR -->
+    <div style="text-align:center;padding:8px">
+      <div style="font-size:12px;color:var(--muted);font-weight:600">${xp} XP</div>
     </div>
   </div>`;
 }
@@ -403,59 +959,53 @@ function renderLessons() {
   const p = getProgress();
   const selectedLevel = state.selectedLevel || 'A1';
   const levels = Object.keys(LEVEL_META);
-
-  // Filter categories for selected level
   const cats = Object.entries(WORDS).filter(([key, cat]) => cat._level === selectedLevel);
-
-  // Count total words per level
   const levelCounts = {};
   for (const lvl of levels) {
-    levelCounts[lvl] = Object.entries(WORDS)
-      .filter(([k, c]) => c._level === lvl)
-      .reduce((sum, [k, c]) => sum + c.words.length, 0);
+    levelCounts[lvl] = Object.entries(WORDS).filter(([k, c]) => c._level === lvl).reduce((sum, [k, c]) => sum + c.words.length, 0);
   }
 
   return `
   <div class="fade-in">
-    <h2 style="font-size:22px;font-weight:800;color:#262261;margin-bottom:4px">📚 שיעורים</h2>
-    <p style="font-size:13px;color:#888;margin-bottom:16px">${Object.keys(WORDS).length} קטגוריות · ${Object.values(WORDS).reduce((s,c) => s + c.words.length, 0)} מילים</p>
+    <h2 style="font-size:24px;font-weight:900;color:var(--navy);margin-bottom:4px">📚 שיעורים</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">${Object.keys(WORDS).length} קטגוריות · ${Object.values(WORDS).reduce((s,c) => s + c.words.length, 0)} מילים</p>
 
     <!-- LEVEL TABS -->
-    <div style="display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px">
+    <div style="display:flex;gap:8px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;-webkit-overflow-scrolling:touch">
       ${levels.map(lvl => {
         const meta = LEVEL_META[lvl];
         const isActive = lvl === selectedLevel;
         return `
-        <button onclick="state.selectedLevel='${lvl}';render()"
-          style="flex-shrink:0;padding:8px 16px;border-radius:99px;font-size:13px;font-weight:700;border:2px solid ${meta.color};cursor:pointer;font-family:'Heebo',sans-serif;transition:.2s;
-          ${isActive ? `background:${meta.color};color:#fff` : `background:#fff;color:${meta.color}`}">
-          ${meta.label} <span style="font-size:11px;opacity:.8">(${levelCounts[lvl]})</span>
+        <button onclick="state.selectedLevel='${lvl}';SFX.click();render()"
+          class="btn" style="flex-shrink:0;padding:10px 18px;border-radius:99px;font-size:13px;font-weight:700;
+          ${isActive ? `background:${meta.color};color:#fff;box-shadow:0 4px 12px ${meta.color}40` : `background:${meta.bg};color:${meta.color};border:2px solid ${meta.color}30`}">
+          ${meta.label} <span style="font-size:11px;opacity:.7">(${levelCounts[lvl]})</span>
         </button>`;
       }).join('')}
     </div>
 
     <!-- CATEGORY CARDS -->
-    <div class="space-y-3">
+    <div style="display:flex;flex-direction:column;gap:12px">
       ${cats.length === 0 ? `
-        <div class="card" style="text-align:center;padding:32px;color:#888">
-          <div style="font-size:40px;margin-bottom:8px">🔒</div>
-          <div style="font-weight:600">אין קטגוריות ברמה זו עדיין</div>
+        <div class="card" style="text-align:center;padding:40px;color:var(--muted)">
+          <div style="font-size:48px;margin-bottom:12px">🔒</div>
+          <div style="font-weight:700;font-size:16px">בקרוב...</div>
         </div>` : ''}
-      ${cats.map(([key, cat]) => {
+      ${cats.map(([key, cat], idx) => {
         const done = p['done_' + key];
         const meta = LEVEL_META[cat._level];
         return `
-        <div class="card" style="cursor:pointer;border:2px solid ${done ? '#22c55e22' : '#f0effa'};display:flex;align-items:center;gap:14px"
+        <div class="card card-hover fade-in stagger-${Math.min(idx+1,5)}" style="cursor:pointer;border-right:4px solid ${done ? 'var(--success)' : meta.color};display:flex;align-items:center;gap:14px"
              onclick="startFlash('${key}','lessons')">
-          <div style="font-size:32px">${cat.icon}</div>
+          <div style="font-size:36px">${cat.icon}</div>
           <div style="flex:1">
-            <div style="font-weight:700;color:#262261;font-size:16px">${cat.title}</div>
-            <div style="display:flex;align-items:center;gap:6px;margin-top:4px">
-              <span style="background:${meta.color}22;color:${meta.color};font-size:11px;font-weight:600;padding:2px 8px;border-radius:99px">${meta.label}</span>
-              <span style="font-size:12px;color:#888">${cat.words.length} מילים</span>
+            <div style="font-weight:700;color:var(--navy);font-size:16px">${cat.title}</div>
+            <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
+              <span class="badge badge-level" style="background:${meta.color}15;color:${meta.color}">${meta.label}</span>
+              <span style="font-size:12px;color:var(--muted)">${cat.words.length} מילים</span>
             </div>
           </div>
-          <div style="font-size:22px">${done ? '✅' : '▶️'}</div>
+          <div style="font-size:24px">${done ? '✅' : '▶️'}</div>
         </div>`;
       }).join('')}
     </div>
@@ -463,23 +1013,21 @@ function renderLessons() {
 }
 
 function renderSeries() {
-  if (state.seriesCategory) {
-    return renderSeriesDetail(state.seriesCategory);
-  }
+  if (state.seriesCategory) return renderSeriesDetail(state.seriesCategory);
   return `
   <div class="fade-in">
-    <h2 style="font-size:22px;font-weight:800;color:#262261;margin-bottom:4px">🎬 מילות סדרות</h2>
-    <p style="font-size:13px;color:#888;margin-bottom:16px">מילים ישירות מהסדרות הטורקיות הגדולות</p>
-    <div class="space-y-3">
-      ${Object.entries(SERIES).map(([key, cat]) => `
-        <div class="card" style="cursor:pointer;border-right:4px solid ${cat.color};display:flex;align-items:center;gap:14px"
-             onclick="state.seriesCategory='${key}';render()">
-          <div style="font-size:32px">${cat.icon}</div>
+    <h2 style="font-size:24px;font-weight:900;color:var(--navy);margin-bottom:4px">🎬 מילות סדרות</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">מילים ישירות מהסדרות הטורקיות</p>
+    <div style="display:flex;flex-direction:column;gap:12px">
+      ${Object.entries(SERIES).map(([key, cat], idx) => `
+        <div class="card card-hover fade-in stagger-${Math.min(idx+1,5)}" style="cursor:pointer;border-right:4px solid ${cat.color};display:flex;align-items:center;gap:14px"
+             onclick="state.seriesCategory='${key}';SFX.click();render()">
+          <div style="font-size:36px">${cat.icon}</div>
           <div style="flex:1">
-            <div style="font-weight:700;color:#262261;font-size:16px">${cat.title}</div>
-            <div style="font-size:12px;color:#888;margin-top:2px">${cat.words.length} ביטויים מהסדרות</div>
+            <div style="font-weight:700;color:var(--navy);font-size:16px">${cat.title}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:4px">${cat.words.length} ביטויים</div>
           </div>
-          <div style="font-size:20px;color:#ccc">›</div>
+          <div style="font-size:20px;color:var(--muted)">›</div>
         </div>`).join('')}
     </div>
   </div>`;
@@ -489,33 +1037,30 @@ function renderSeriesDetail(catKey) {
   const cat = SERIES[catKey];
   return `
   <div class="fade-in">
-    <button onclick="state.seriesCategory=null;render()" style="background:none;border:none;color:#262261;font-size:15px;font-weight:600;cursor:pointer;margin-bottom:12px;font-family:'Heebo',sans-serif">
-      ← חזרה לסדרות
-    </button>
-    <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px">
-      <div style="font-size:32px">${cat.icon}</div>
-      <h2 style="font-size:20px;font-weight:800;color:#262261">${cat.title}</h2>
+    <button onclick="state.seriesCategory=null;SFX.click();render()" class="btn btn-ghost" style="margin-bottom:12px;padding:8px 14px;font-size:14px">← חזרה</button>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <div style="font-size:36px">${cat.icon}</div>
+      <h2 style="font-size:22px;font-weight:900;color:var(--navy)">${cat.title}</h2>
     </div>
     <div style="display:flex;gap:10px;margin-bottom:16px">
-      <button class="btn-primary" onclick="startFlash('${catKey}','series')" style="flex:1">לומד עם כרטיסיות</button>
-      <button class="btn-secondary" onclick="startQuiz('${catKey}','series')" style="flex:1">מבחן</button>
+      <button class="btn btn-primary" onclick="startFlash('${catKey}','series')" style="flex:1">כרטיסיות</button>
+      <button class="btn btn-secondary" onclick="startQuiz('${catKey}','series')" style="flex:1">מבחן</button>
     </div>
-    <div class="space-y-2">
+    <div style="display:flex;flex-direction:column;gap:8px">
       ${cat.words.map(w => `
-        <div class="card" style="padding:12px 16px;display:flex;justify-content:space-between;align-items:center">
+        <div class="card" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
           <div>
-            <div style="font-weight:700;font-size:16px;color:#262261">${w.tr}</div>
-            <div style="font-size:12px;color:#888;margin-top:1px">הגייה: ${w.pron}</div>
+            <div style="font-weight:700;font-size:16px;color:var(--navy)">${w.tr}</div>
+            <div style="font-size:12px;color:var(--muted);margin-top:2px">${w.pron}</div>
           </div>
-          <div style="text-align:left;direction:rtl">
-            <div style="font-size:15px;font-weight:600;color:#AE1B28">${w.he}</div>
-          </div>
+          <div style="font-size:15px;font-weight:700;color:var(--red)">${w.he}</div>
         </div>`).join('')}
     </div>
   </div>`;
 }
 
 function startFlash(catKey, source) {
+  SFX.click();
   state.flashIdx = 0;
   state.flashCategory = catKey;
   state.flashSource = source;
@@ -530,38 +1075,40 @@ function renderFlash() {
 
   return `
   <div class="fade-in">
-    <div class="flex items-center justify-between mb-3">
-      <button onclick="navigate(state.flashSource === 'series' ? 'series' : 'lessons')"
-        style="background:none;border:none;color:#262261;font-size:15px;font-weight:600;cursor:pointer;font-family:'Heebo',sans-serif">← חזרה</button>
-      <span style="font-size:13px;color:#888;font-weight:600">${state.flashIdx + 1} / ${words.length}</span>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <button onclick="navigate(state.flashSource === 'series' ? 'series' : 'lessons')" class="btn btn-ghost" style="padding:8px 14px;font-size:14px">← חזרה</button>
+      <span style="font-size:13px;color:var(--muted);font-weight:700">${state.flashIdx + 1} / ${words.length}</span>
     </div>
 
-    <div style="font-size:14px;font-weight:600;color:#262261;margin-bottom:6px">${cat.icon} ${cat.title}</div>
-    <div class="progress-bar mb-4"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+      <span style="font-size:20px">${cat.icon}</span>
+      <span style="font-size:15px;font-weight:700;color:var(--navy)">${cat.title}</span>
+    </div>
+    <div class="progress-bar" style="margin-bottom:20px"><div class="progress-fill" style="width:${pct}%"></div></div>
 
     <!-- FLIP CARD -->
-    <div class="flip-card" id="fc" style="height:220px;margin-bottom:20px" onclick="document.getElementById('fc').classList.toggle('flipped')">
+    <div class="flip-card" id="fc" style="height:240px;margin-bottom:20px" onclick="document.getElementById('fc').classList.toggle('flipped');SFX.flip()">
       <div class="flip-card-inner" style="height:100%">
-        <div class="flip-front" style="background:linear-gradient(135deg,#262261,#403C74)">
-          <div style="font-size:11px;color:#9090c0;font-weight:600;letter-spacing:2px;margin-bottom:12px">טורקית</div>
-          <div style="font-size:36px;font-weight:800;color:#fff;text-align:center">${w.tr}</div>
-          <div style="font-size:13px;color:#9090c0;margin-top:12px">לחץ להפוך</div>
+        <div class="flip-front" style="background:linear-gradient(135deg,var(--navy),var(--purple))">
+          <div style="font-size:11px;color:#9090c0;font-weight:700;letter-spacing:2px;margin-bottom:16px">TURKCE</div>
+          <div style="font-size:38px;font-weight:900;color:#fff;text-align:center">${w.tr}</div>
+          <div style="font-size:13px;color:#9090c0;margin-top:16px">לחץ להפוך</div>
         </div>
-        <div class="flip-back" style="background:#fff;border:3px solid #262261">
-          <div style="font-size:11px;color:#888;font-weight:600;letter-spacing:2px;margin-bottom:8px">עברית</div>
-          <div style="font-size:30px;font-weight:800;color:#AE1B28;text-align:center">${w.he}</div>
-          <div style="margin-top:12px;font-size:13px;color:#888;text-align:center">הגייה:</div>
-          <div style="font-size:15px;color:#403C74;font-weight:600;text-align:center;margin-top:4px">${w.pron}</div>
+        <div class="flip-back" style="background:#fff;border:3px solid var(--navy)">
+          <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:2px;margin-bottom:10px">עברית</div>
+          <div style="font-size:30px;font-weight:900;color:var(--red);text-align:center">${w.he}</div>
+          <div style="margin-top:14px;font-size:12px;color:var(--muted)">הגייה:</div>
+          <div style="font-size:16px;color:var(--purple);font-weight:700;text-align:center;margin-top:4px">${w.pron}</div>
         </div>
       </div>
     </div>
 
     <!-- CONTROLS -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
-      <button class="btn-outline" onclick="flashNav(-1)" ${state.flashIdx === 0 ? 'disabled style="opacity:.4"' : ''}>← הקודמת</button>
-      <button class="btn-primary" onclick="flashNav(1)">${state.flashIdx < words.length - 1 ? 'הבאה →' : '✅ סיים'}</button>
+      <button class="btn btn-outline" onclick="flashNav(-1)" ${state.flashIdx === 0 ? 'disabled style="opacity:.3"' : ''}>← הקודמת</button>
+      <button class="btn btn-primary" onclick="flashNav(1)">${state.flashIdx < words.length - 1 ? 'הבאה →' : '✅ סיים'}</button>
     </div>
-    <button class="btn-secondary" onclick="startQuiz('${state.flashCategory}','${state.flashSource}')" style="width:100%">עבור למבחן 📝</button>
+    <button class="btn btn-secondary" onclick="startQuiz('${state.flashCategory}','${state.flashSource}')" style="width:100%">עבור למבחן 📝</button>
   </div>`;
 }
 
@@ -572,19 +1119,26 @@ function flashNav(dir) {
   if (dir > 0 && state.flashIdx >= cat.words.length - 1) {
     saveProgress('done_' + state.flashCategory, true);
     addXP(20);
-    navigate(state.flashSource === 'series' ? 'series' : 'lessons');
+    addDailyWord(cat.words.length);
+    SFX.fanfare();
+    showConfetti(20);
+    showToast('🎉 סיימת! +20 XP');
+    setTimeout(() => navigate(state.flashSource === 'series' ? 'series' : 'lessons'), 1500);
     return;
   }
+  SFX.flip();
   state.flashIdx = Math.max(0, Math.min(cat.words.length - 1, state.flashIdx + dir));
   render();
 }
 
 function startQuiz(catKey, source) {
+  SFX.click();
   state.flashCategory = catKey;
   state.flashSource = source;
   state.quizIdx = 0;
   state.quizAnswered = false;
   state.quizScore = 0;
+  state.quizCorrectStreak = 0;
   const cat = source === 'series' ? SERIES[catKey] : WORDS[catKey];
   state.quizTotal = cat.words.length;
   navigate('quiz');
@@ -603,25 +1157,28 @@ function renderQuiz() {
 
   return `
   <div class="fade-in">
-    <div class="flex items-center justify-between mb-3">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <button onclick="navigate('flash',{flashCategory:state.flashCategory,flashSource:state.flashSource,flashIdx:0})"
-        style="background:none;border:none;color:#262261;font-size:15px;font-weight:600;cursor:pointer;font-family:'Heebo',sans-serif">← חזרה</button>
-      <span style="font-size:13px;color:#888;font-weight:600">${state.quizIdx + 1} / ${words.length}</span>
+        class="btn btn-ghost" style="padding:8px 14px;font-size:14px">← חזרה</button>
+      <div style="display:flex;align-items:center;gap:8px">
+        ${state.quizCorrectStreak >= 3 ? `<span style="font-size:13px;font-weight:700;color:var(--red)">🔥 ${state.quizCorrectStreak}</span>` : ''}
+        <span style="font-size:13px;color:var(--muted);font-weight:700">${state.quizIdx + 1} / ${words.length}</span>
+      </div>
     </div>
-    <div class="progress-bar mb-4"><div class="progress-fill" style="width:${pct}%"></div></div>
+    <div class="progress-bar" style="margin-bottom:20px"><div class="progress-fill" style="width:${pct}%"></div></div>
 
-    <div class="card mb-4" style="text-align:center;background:linear-gradient(135deg,#262261,#403C74);min-height:110px;display:flex;flex-direction:column;align-items:center;justify-content:center">
-      <div style="font-size:12px;color:#9090c0;font-weight:600;letter-spacing:2px;margin-bottom:8px">מה הפירוש בעברית?</div>
-      <div style="font-size:34px;font-weight:800;color:#fff">${correct.tr}</div>
+    <div class="card" style="text-align:center;background:linear-gradient(135deg,var(--navy),var(--purple));min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;margin-bottom:20px">
+      <div style="font-size:12px;color:#9090c0;font-weight:700;letter-spacing:2px;margin-bottom:10px">מה הפירוש בעברית?</div>
+      <div style="font-size:36px;font-weight:900;color:#fff">${correct.tr}</div>
     </div>
 
-    <div class="space-y-3" id="quiz-options">
+    <div style="display:flex;flex-direction:column;gap:10px" id="quiz-options">
       ${options.map((o, i) => `
         <button class="quiz-option" id="qo-${i}" onclick="answerQuiz(${i},${o === correct},'qo-${i}')">
           ${o.he}
         </button>`).join('')}
     </div>
-    <div id="quiz-feedback" style="margin-top:12px;min-height:20px;text-align:center;font-weight:700;font-size:15px"></div>
+    <div id="quiz-feedback" style="margin-top:14px;min-height:24px;text-align:center;font-weight:700;font-size:16px"></div>
   </div>`;
 }
 
@@ -634,19 +1191,36 @@ function answerQuiz(idx, isCorrect, elId) {
 
   const cat = state.flashSource === 'series' ? SERIES[state.flashCategory] : WORDS[state.flashCategory];
   const correct = cat.words[state.quizIdx];
+  const wordKey = state.flashCategory + '_' + state.quizIdx;
 
   if (isCorrect) {
     el.classList.add('correct');
     if (feedback) { feedback.textContent = '✅ מצוין!'; feedback.style.color = '#15803d'; }
     state.quizScore++;
+    state.quizCorrectStreak++;
     addXP(10);
+    addDailyWord(1);
+    updateWordStrength(wordKey, true);
+    SFX.correct();
+
+    if (state.quizCorrectStreak === 3) {
+      showToast('🔥 3 ברצף! כל הכבוד!');
+    } else if (state.quizCorrectStreak === 5) {
+      showToast('⚡ 5 ברצף! אש!');
+      showConfetti(15);
+    }
   } else {
     el.classList.add('wrong');
     if (feedback) { feedback.innerHTML = `❌ הנכון: <strong>${correct.he}</strong>`; feedback.style.color = '#b91c1c'; }
-    // highlight correct
     document.querySelectorAll('.quiz-option').forEach(b => {
       if (b.textContent.trim() === correct.he) b.classList.add('correct');
     });
+    state.quizCorrectStreak = 0;
+    updateWordStrength(wordKey, false);
+    SFX.wrong();
+    // Subtle shake
+    const card = el.closest('.fade-in');
+    if (card) { card.classList.add('shake'); setTimeout(() => card.classList.remove('shake'), 300); }
   }
 
   setTimeout(() => {
@@ -660,20 +1234,79 @@ function renderQuizResult() {
   const score = state.quizScore;
   const total = state.quizTotal;
   const pct = Math.round((score / total) * 100);
-  const emoji = pct >= 80 ? '🏆' : pct >= 50 ? '👍' : '💪';
-  const msg = pct >= 80 ? 'מצוין! אתה שולט בחומר!' : pct >= 50 ? 'טוב! קצת עוד תרגול ותהיה מושלם' : 'המשך לתרגל, אתה בדרך הנכונה!';
+  const emoji = pct === 100 ? '🏆' : pct >= 80 ? '🌟' : pct >= 50 ? '👍' : '💪';
+  const msg = pct === 100 ? 'מושלם! אתה שולט בחומר!' : pct >= 80 ? 'מצוין! כמעט מושלם!' : pct >= 50 ? 'טוב! קצת עוד תרגול' : 'המשך לתרגל, אתה בדרך!';
+
+  if (pct === 100) { saveProgress('perfectQuiz', true); }
   addXP(pct >= 80 ? 30 : 10);
   saveProgress('done_' + state.flashCategory, pct >= 80);
 
+  // Variable reward - bonus word
+  const allWords = [];
+  for (const cat of Object.values(WORDS)) { for (const w of cat.words) allWords.push(w); }
+  const bonusWord = allWords[Math.floor(Math.random() * allWords.length)];
+
+  if (pct >= 80) { setTimeout(() => { SFX.fanfare(); showConfetti(25); }, 300); }
+
   return `
-  <div class="fade-in" style="text-align:center;padding-top:24px">
-    <div style="font-size:72px;margin-bottom:12px">${emoji}</div>
-    <h2 style="font-size:26px;font-weight:800;color:#262261;margin-bottom:8px">${score} / ${total}</h2>
-    <div style="font-size:18px;color:#AE1B28;font-weight:700;margin-bottom:8px">${pct}%</div>
-    <p style="color:#555;margin-bottom:28px">${msg}</p>
+  <div class="fade-in" style="text-align:center;padding-top:20px">
+    <div style="font-size:80px;margin-bottom:16px;animation:unlockBounce 0.5s ease">${emoji}</div>
+    <h2 style="font-size:28px;font-weight:900;color:var(--navy);margin-bottom:8px">${score} / ${total}</h2>
+    <div style="font-size:22px;color:var(--red);font-weight:800;margin-bottom:8px">${pct}%</div>
+    <p style="color:#555;margin-bottom:24px;font-size:16px">${msg}</p>
+
+    <!-- BONUS WORD -->
+    <div class="card" style="text-align:center;margin-bottom:20px;border:2px dashed var(--purple);background:#f8f7ff">
+      <div style="font-size:12px;font-weight:700;color:var(--purple);letter-spacing:1px;margin-bottom:8px">🎁 מילת בונוס</div>
+      <div style="font-size:24px;font-weight:800;color:var(--navy)">${bonusWord.tr}</div>
+      <div style="font-size:16px;color:var(--red);font-weight:700;margin-top:4px">${bonusWord.he}</div>
+      <div style="font-size:13px;color:var(--muted);margin-top:2px">${bonusWord.pron}</div>
+    </div>
+
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
-      <button class="btn-outline" onclick="startQuiz('${state.flashCategory}','${state.flashSource}')">נסה שוב</button>
-      <button class="btn-primary" onclick="navigate(state.flashSource==='series'?'series':'lessons')">המשך</button>
+      <button class="btn btn-outline" onclick="startQuiz('${state.flashCategory}','${state.flashSource}')">נסה שוב</button>
+      <button class="btn btn-primary" onclick="navigate(state.flashSource==='series'?'series':'lessons')">המשך</button>
+    </div>
+  </div>`;
+}
+
+// Review mode for weak words
+function renderReview() {
+  const weak = getWeakWords();
+  if (weak.length === 0) {
+    return `
+    <div class="fade-in" style="text-align:center;padding-top:40px">
+      <div style="font-size:64px;margin-bottom:16px">🎉</div>
+      <h2 style="font-size:22px;font-weight:800;color:var(--navy);margin-bottom:8px">אין מילים לחזרה!</h2>
+      <p style="color:var(--muted);margin-bottom:24px">כל המילים שלך חזקות</p>
+      <button class="btn btn-primary" onclick="navigate('home')">חזרה לבית</button>
+    </div>`;
+  }
+  return `
+  <div class="fade-in">
+    <button onclick="navigate('home')" class="btn btn-ghost" style="margin-bottom:12px;padding:8px 14px;font-size:14px">← חזרה</button>
+    <h2 style="font-size:22px;font-weight:900;color:var(--navy);margin-bottom:4px">🔄 מילים לחזרה</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:16px">${weak.length} מילים צריכות חיזוק</p>
+    <div style="display:flex;flex-direction:column;gap:10px">
+      ${weak.slice(0, 20).map(w => {
+        // Find actual word data
+        const parts = w.key.split('_');
+        const qIdx = parseInt(parts.pop());
+        const catKey = parts.join('_');
+        const cat = WORDS[catKey] || Object.values(SERIES).find(s => s.words[qIdx]);
+        const word = cat ? cat.words[qIdx] : null;
+        if (!word) return '';
+        const strengthClass = w.effectiveLevel === 0 ? 'strength-weak' : w.effectiveLevel === 1 ? 'strength-medium' : 'strength-strong';
+        return `
+        <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px">
+          <div class="strength-dot ${strengthClass}"></div>
+          <div style="flex:1">
+            <div style="font-weight:700;color:var(--navy)">${word.tr}</div>
+            <div style="font-size:12px;color:var(--muted)">${word.pron}</div>
+          </div>
+          <div style="font-weight:700;color:var(--red);font-size:14px">${word.he}</div>
+        </div>`;
+      }).join('')}
     </div>
   </div>`;
 }
@@ -685,84 +1318,82 @@ function renderChat() {
   if (!hasKey) {
     return `
     <div class="fade-in">
-      <h2 style="font-size:22px;font-weight:800;color:#262261;margin-bottom:4px">🎙️ שיחה עם בוט</h2>
-      <p style="font-size:13px;color:#888;margin-bottom:20px">דיבור טורקית עם בינה מלאכותית</p>
+      <h2 style="font-size:24px;font-weight:900;color:var(--navy);margin-bottom:4px">🎙️ שיחה עם בוט</h2>
+      <p style="font-size:13px;color:var(--muted);margin-bottom:20px">דיבור טורקית עם בינה מלאכותית</p>
 
       <div class="card" style="border:2px solid #fde8ea;margin-bottom:16px">
         <div style="font-size:20px;margin-bottom:8px">🔑 הגדרת ElevenLabs</div>
         <p style="font-size:13px;color:#555;margin-bottom:16px;line-height:1.6">
           כדי להפעיל את הבוט, תזדקק ל-API Key ול-Agent ID מ-ElevenLabs.
-          <br><strong>לחץ על "הדרכה" למטה</strong> לסרטון שלב-אחר-שלב.
         </p>
-        <div class="space-y-3">
+        <div style="display:flex;flex-direction:column;gap:12px">
           <div>
-            <label style="font-size:13px;font-weight:600;color:#262261;display:block;margin-bottom:4px">API Key</label>
+            <label style="font-size:13px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px">API Key</label>
             <input id="el-key" type="password" placeholder="xi-api-key-..." value="${p.elevenlabs_key || ''}"
-              style="width:100%;padding:10px 14px;border:2px solid #e0e0ee;border-radius:10px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr">
+              style="width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:14px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr;outline:none;transition:border 0.2s"
+              onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
           </div>
           <div>
-            <label style="font-size:13px;font-weight:600;color:#262261;display:block;margin-bottom:4px">Agent ID</label>
+            <label style="font-size:13px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px">Agent ID</label>
             <input id="el-agent" type="text" placeholder="agent_..." value="${p.elevenlabs_agent || ''}"
-              style="width:100%;padding:10px 14px;border:2px solid #e0e0ee;border-radius:10px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr">
+              style="width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:14px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr;outline:none;transition:border 0.2s"
+              onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
           </div>
-          <button class="btn-primary" onclick="saveEL()" style="width:100%">שמור והפעל</button>
+          <button class="btn btn-primary" onclick="saveEL()" style="width:100%">שמור והפעל</button>
         </div>
       </div>
 
-      <!-- SETUP GUIDE -->
-      <div class="card" style="background:#f0effa">
-        <div style="font-weight:700;color:#262261;font-size:16px;margin-bottom:12px">📋 איך מגדירים? (שלב-אחר-שלב)</div>
+      <div class="card" style="background:#f8f7ff">
+        <div style="font-weight:800;color:var(--navy);font-size:16px;margin-bottom:14px">📋 איך מגדירים?</div>
         ${[
-          ['1','היכנס ל-ElevenLabs.io והתחבר לחשבון שלך'],
-          ['2','לחץ על הפרופיל שלך (למעלה מימין) ← "Profile + API Key"'],
-          ['3','העתק את ה-API Key ● הדבק בשדה למעלה'],
-          ['4','עבור ל-"Conversational AI" בתפריט הצד'],
-          ['5','לחץ "Create Agent" ← בחר "Blank"'],
-          ['6','שם הבוט: Alice | שפה ראשית: Turkish'],
-          ['7','הוסף System Prompt – לחץ כאן לקבל את הפרומפט המוכן ⬇️'],
-          ['8','לחץ "Save" ← העתק את ה-Agent ID מהכתובת / מ-Settings'],
-          ['9','חזור לכאן, הדבק את ה-Agent ID ולחץ שמור!'],
+          ['1','היכנס ל-ElevenLabs.io והתחבר'],
+          ['2','לחץ פרופיל ← "Profile + API Key"'],
+          ['3','העתק API Key ← הדבק למעלה'],
+          ['4','עבור ל-"Conversational AI"'],
+          ['5','לחץ "Create Agent" ← "Blank"'],
+          ['6','שם: Alice | שפה: Turkish'],
+          ['7','הוסף System Prompt (כפתור למטה)'],
+          ['8','Save ← העתק Agent ID'],
+          ['9','חזור הנה, הדבק ולחץ שמור!'],
         ].map(([n, t]) => `
           <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
-            <div style="min-width:26px;height:26px;border-radius:50%;background:#262261;color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center">${n}</div>
-            <div style="font-size:13px;color:#333;line-height:1.5">${t}</div>
+            <div style="min-width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${n}</div>
+            <div style="font-size:13px;color:#444;line-height:1.5">${t}</div>
           </div>`).join('')}
-        <button class="btn-secondary" onclick="showPrompt()" style="width:100%;margin-top:8px">📋 הצג System Prompt לבוט</button>
+        <button class="btn btn-secondary" onclick="showPrompt()" style="width:100%;margin-top:8px">📋 הצג System Prompt</button>
       </div>
     </div>`;
   }
 
-  // Chat UI (ElevenLabs Conversational AI widget)
   return `
   <div class="fade-in">
-    <div class="flex items-center justify-between mb-4">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
       <div>
-        <h2 style="font-size:22px;font-weight:800;color:#262261">🎙️ שיחה עם הבוט</h2>
-        <p style="font-size:13px;color:#888">לחץ Start ותתחיל לדבר טורקית!</p>
+        <h2 style="font-size:24px;font-weight:900;color:var(--navy)">🎙️ שיחה עם הבוט</h2>
+        <p style="font-size:13px;color:var(--muted)">לחץ Start ותתחיל!</p>
       </div>
-      <button onclick="clearEL()" style="background:none;border:none;font-size:12px;color:#888;cursor:pointer;text-decoration:underline">שנה הגדרות</button>
+      <button onclick="clearEL()" class="btn btn-ghost" style="font-size:12px;padding:6px 12px">שנה הגדרות</button>
     </div>
 
-    <div class="card" style="background:linear-gradient(135deg,#262261,#403C74);text-align:center;padding:32px;margin-bottom:16px">
-      <div style="font-size:48px;margin-bottom:12px">🤖</div>
-      <div style="color:#fff;font-size:18px;font-weight:700;margin-bottom:6px">Alice – אליס</div>
-      <div style="color:#9090c0;font-size:13px;margin-bottom:20px">מורה לטורקית – מדברת גם בעברית</div>
-      <button class="btn-primary" id="start-chat-btn" onclick="startConversation()" style="font-size:16px;padding:14px 36px">
+    <div class="card" style="background:linear-gradient(135deg,var(--navy),var(--purple));text-align:center;padding:36px;margin-bottom:16px">
+      <div style="font-size:56px;margin-bottom:14px">🤖</div>
+      <div style="color:#fff;font-size:20px;font-weight:800;margin-bottom:6px">Alice – אליס</div>
+      <div style="color:#9090c0;font-size:13px;margin-bottom:24px">מורה לטורקית – מדברת גם בעברית</div>
+      <button class="btn btn-primary" id="start-chat-btn" onclick="startConversation()" style="font-size:17px;padding:16px 40px">
         🎙️ התחל שיחה
       </button>
     </div>
 
     <div id="chat-status" class="card" style="display:none;text-align:center">
-      <div id="chat-status-text" style="font-size:15px;color:#262261;font-weight:600"></div>
+      <div id="chat-status-text" style="font-size:15px;color:var(--navy);font-weight:700"></div>
     </div>
 
     <div class="card" style="background:#fffbea;border:1px solid #fde68a">
-      <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">💡 טיפים לשיחה:</div>
+      <div style="font-size:13px;font-weight:700;color:#92400e;margin-bottom:8px">💡 טיפים:</div>
       <ul style="font-size:13px;color:#78350f;line-height:1.8;padding-right:16px">
-        <li>הבוט ישאל אותך באיזו דמות הוא יגלם</li>
-        <li>אתה יכול לבקש הסבר בעברית בכל עת</li>
-        <li>אמור "עצור" או "durdur" לסיום השיחה</li>
-        <li>הבוט יתקן אותך בעדינות אם תטעה</li>
+        <li>הבוט ישאל באיזו דמות לגלם</li>
+        <li>בקש הסבר בעברית בכל עת</li>
+        <li>אמור "עצור" לסיום</li>
       </ul>
     </div>
   </div>`;
@@ -774,6 +1405,8 @@ function saveEL() {
   if (!key || !agent) { alert('נא למלא גם API Key וגם Agent ID'); return; }
   saveProgress('elevenlabs_key', key);
   saveProgress('elevenlabs_agent', agent);
+  SFX.correct();
+  showToast('✅ נשמר בהצלחה!');
   render();
 }
 function clearEL() {
@@ -825,18 +1458,15 @@ Alice: "מעולה! אז מה נלמד היום? אפשר: מילים בסיסי
 User: "מילים בסיסיות"
 Alice: "יופי! נתחיל עם שלום בטורקית: Merhaba – מרחבה. נסה להגיד את זה!"`;
 
-
   const modal = document.createElement('div');
-  modal.style.cssText = 'position:fixed;inset:0;background:#00000080;z-index:999;display:flex;align-items:center;justify-content:center;padding:16px';
+  modal.className = 'celebration-overlay';
   modal.innerHTML = `
-    <div style="background:#fff;border-radius:16px;padding:20px;max-width:480px;width:100%;max-height:80vh;overflow-y:auto">
-      <div style="font-weight:800;font-size:17px;color:#262261;margin-bottom:12px">📋 System Prompt לבוט</div>
-      <textarea readonly style="width:100%;height:260px;font-size:12px;border:1px solid #e0e0ee;border-radius:8px;padding:10px;font-family:monospace;direction:ltr;resize:none">${prompt}</textarea>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px">
-        <button onclick="navigator.clipboard.writeText(document.querySelector('textarea').value);this.textContent='✅ הועתק!'"
-          style="background:#262261;color:#fff;border:none;border-radius:10px;padding:10px;font-size:14px;cursor:pointer;font-family:'Heebo',sans-serif">📋 העתק</button>
-        <button onclick="this.closest('[style*=fixed]').remove()"
-          style="background:#AE1B28;color:#fff;border:none;border-radius:10px;padding:10px;font-size:14px;cursor:pointer;font-family:'Heebo',sans-serif">סגור</button>
+    <div style="background:#fff;border-radius:20px;padding:24px;max-width:480px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
+      <div style="font-weight:900;font-size:18px;color:var(--navy);margin-bottom:14px">📋 System Prompt</div>
+      <textarea readonly style="width:100%;height:260px;font-size:12px;border:2px solid var(--border);border-radius:12px;padding:12px;font-family:monospace;direction:ltr;resize:none;outline:none">${prompt}</textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+        <button class="btn btn-secondary" onclick="navigator.clipboard.writeText(document.querySelector('textarea').value);this.textContent='✅ הועתק!'">📋 העתק</button>
+        <button class="btn btn-primary" onclick="this.closest('.celebration-overlay').remove()">סגור</button>
       </div>
     </div>`;
   document.body.appendChild(modal);
@@ -855,26 +1485,20 @@ async function startConversation() {
   if (statusText) statusText.textContent = 'מתחבר לבוט...';
 
   try {
-    // Load ElevenLabs widget script
     if (!document.querySelector('script[src*="elevenlabs.io/convai"]')) {
       await new Promise((resolve, reject) => {
         const s = document.createElement('script');
         s.src = 'https://elevenlabs.io/convai-widget/index.js';
-        s.async = true;
-        s.onload = resolve; s.onerror = reject;
+        s.async = true; s.onload = resolve; s.onerror = reject;
         document.head.appendChild(s);
       });
     }
-
-    // Remove any existing widget
     document.querySelectorAll('elevenlabs-convai').forEach(el => el.remove());
-
-    // Create the ElevenLabs widget
     const widget = document.createElement('elevenlabs-convai');
     widget.setAttribute('agent-id', p.elevenlabs_agent);
     document.body.appendChild(widget);
 
-    if (statusText) statusText.textContent = '✅ מחובר! הבוט מוכן לשיחה';
+    if (statusText) statusText.textContent = '✅ מחובר! הבוט מוכן';
     if (btn) {
       btn.textContent = '🔴 סיים שיחה';
       btn.onclick = () => {
@@ -882,9 +1506,9 @@ async function startConversation() {
         location.reload();
       };
     }
-
+    SFX.correct();
   } catch(e) {
-    if (statusText) { statusText.textContent = '❌ שגיאה בטעינת הבוט: ' + e.message; statusText.style.color = '#b91c1c'; }
+    if (statusText) { statusText.textContent = '❌ שגיאה: ' + e.message; statusText.style.color = 'var(--danger)'; }
     if (btn) { btn.textContent = '🎙️ נסה שוב'; btn.onclick = startConversation; }
   }
 }
@@ -893,37 +1517,45 @@ function renderProfile() {
   const p = getProgress();
   const xp = p.xp || 0;
   const streak = p.streak || 1;
-  const doneCount = Object.keys(p).filter(k => k.startsWith('done_')).length;
+  const doneCount = Object.keys(p).filter(k => k.startsWith('done_') && p[k]).length;
   const totalCats = Object.keys(WORDS).length + Object.keys(SERIES).length;
-  const level = xp < 100 ? 'מתחיל 🌱' : xp < 300 ? 'בסיסי 📖' : xp < 600 ? 'בינוני 🌟' : 'מתקדם 🏆';
-  const nextXP = xp < 100 ? 100 : xp < 300 ? 300 : xp < 600 ? 600 : 1000;
-  const pct = Math.min(100, Math.round((xp / nextXP) * 100));
-
-  const badges = [
-    { icon:'🌱', name:'מתחיל', done: xp >= 1 },
-    { icon:'📖', name:'לומד', done: xp >= 100 },
-    { icon:'🎬', name:'חובב סדרות', done: Object.keys(p).some(k => k.startsWith('done_') && SERIES[k.replace('done_','')]) },
-    { icon:'🔥', name:'שבוע רצף', done: streak >= 7 },
-    { icon:'🏆', name:'מומחה', done: xp >= 500 },
-    { icon:'💬', name:'שיחן', done: !!p.elevenlabs_key },
+  const levels = [
+    { min:0, label:'מתחיל', icon:'🌱' },
+    { min:100, label:'בסיסי', icon:'📖' },
+    { min:300, label:'בינוני', icon:'⭐' },
+    { min:600, label:'מתקדם', icon:'🌟' },
+    { min:1000, label:'מומחה', icon:'💎' },
+    { min:1500, label:'מאסטר', icon:'👑' },
+    { min:2500, label:'אגדה', icon:'🏆' },
   ];
+  const currentLevel = [...levels].reverse().find(l => xp >= l.min) || levels[0];
+  const nextLevel = levels.find(l => l.min > xp) || levels[levels.length - 1];
+  const pctToNext = Math.min(100, Math.round(((xp - currentLevel.min) / (nextLevel.min - currentLevel.min)) * 100));
+
+  const unlockedAchievements = ALL_ACHIEVEMENTS.filter(a => p.achievements && p.achievements[a.id]);
+  const lockedAchievements = ALL_ACHIEVEMENTS.filter(a => !p.achievements || !p.achievements[a.id]);
 
   return `
-  <div class="fade-in space-y-4">
-    <h2 style="font-size:22px;font-weight:800;color:#262261">👤 הפרופיל שלי</h2>
+  <div class="fade-in" style="display:flex;flex-direction:column;gap:14px">
+    <h2 style="font-size:24px;font-weight:900;color:var(--navy)">👤 הפרופיל שלי</h2>
 
-    <div class="card" style="background:linear-gradient(135deg,#262261,#403C74);color:#fff;text-align:center;padding:28px">
-      <div style="font-size:52px;margin-bottom:8px">🎓</div>
-      <div style="font-size:20px;font-weight:800">${level}</div>
+    <!-- LEVEL CARD -->
+    <div class="card" style="background:linear-gradient(135deg,var(--navy),var(--purple));color:#fff;text-align:center;padding:28px">
+      <div style="font-size:52px;margin-bottom:8px">${currentLevel.icon}</div>
+      <div style="font-size:22px;font-weight:900">${currentLevel.label}</div>
       <div style="font-size:14px;color:#9090c0;margin-top:4px">${xp} נקודות XP</div>
       <div style="margin-top:16px">
-        <div style="display:flex;justify-content:space-between;font-size:12px;color:#9090c0;margin-bottom:4px">
-          <span>${xp} XP</span><span>${nextXP} XP</span>
+        <div style="display:flex;justify-content:space-between;font-size:12px;color:#9090c0;margin-bottom:6px">
+          <span>${currentLevel.icon} ${currentLevel.label}</span><span>${nextLevel.icon} ${nextLevel.label}</span>
         </div>
-        <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
+        <div class="progress-bar" style="background:rgba(255,255,255,0.15)">
+          <div class="progress-fill" style="width:${pctToNext}%;background:linear-gradient(90deg,var(--red),#f59e0b)"></div>
+        </div>
+        <div style="font-size:11px;color:#9090c0;margin-top:4px">עוד ${nextLevel.min - xp} XP לרמה הבאה</div>
       </div>
     </div>
 
+    <!-- STATS -->
     <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px">
       ${[
         ['🔥', streak, 'ימי רצף'],
@@ -931,27 +1563,58 @@ function renderProfile() {
         ['📚', totalCats, 'נושאים'],
       ].map(([i,v,l]) => `
         <div class="card" style="text-align:center;padding:14px 8px">
-          <div style="font-size:24px">${i}</div>
-          <div style="font-size:22px;font-weight:800;color:#262261">${v}</div>
-          <div style="font-size:11px;color:#888">${l}</div>
+          <div style="font-size:26px">${i}</div>
+          <div style="font-size:24px;font-weight:900;color:var(--navy)">${v}</div>
+          <div style="font-size:11px;color:var(--muted);font-weight:600">${l}</div>
         </div>`).join('')}
     </div>
 
+    <!-- STREAK FREEZE -->
+    <div class="card" style="display:flex;align-items:center;justify-content:space-between">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div style="font-size:28px">🧊</div>
+        <div>
+          <div style="font-weight:700;color:var(--navy)">Streak Freeze</div>
+          <div style="font-size:12px;color:var(--muted)">הגנה על הרצף ליום אחד</div>
+        </div>
+      </div>
+      ${p.streakFreeze ?
+        `<span class="badge" style="background:#e8f5e9;color:#15803d">פעיל</span>` :
+        `<button class="btn btn-outline" style="padding:8px 16px;font-size:13px" onclick="activateFreeze()">הפעל (50 XP)</button>`
+      }
+    </div>
+
+    <!-- ACHIEVEMENTS -->
     <div class="card">
-      <div style="font-weight:700;color:#262261;font-size:16px;margin-bottom:12px">🏅 עיטורים</div>
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px">
-        ${badges.map(b => `
-          <div style="text-align:center;opacity:${b.done ? 1 : 0.35}">
-            <div style="font-size:28px">${b.icon}</div>
-            <div style="font-size:11px;color:#555;font-weight:600;margin-top:4px">${b.name}</div>
-          </div>`).join('')}
+      <div style="font-weight:800;color:var(--navy);font-size:17px;margin-bottom:14px">🏅 עיטורים (${unlockedAchievements.length}/${ALL_ACHIEVEMENTS.length})</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px">
+        ${ALL_ACHIEVEMENTS.map(a => {
+          const unlocked = p.achievements && p.achievements[a.id];
+          return `
+          <div style="text-align:center;opacity:${unlocked ? 1 : 0.3};transition:opacity 0.3s" title="${a.desc}">
+            <div style="font-size:30px;${unlocked ? '' : 'filter:grayscale(1)'}">${a.icon}</div>
+            <div style="font-size:10px;color:var(--navy);font-weight:700;margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${a.name}</div>
+          </div>`;
+        }).join('')}
       </div>
     </div>
 
-    <button class="btn-outline" onclick="if(confirm('לאפס את כל ההתקדמות?')){localStorage.removeItem('alicecool_progress');location.reload()}" style="width:100%;color:#888;border-color:#ddd">
+    <!-- RESET -->
+    <button class="btn btn-ghost" onclick="if(confirm('לאפס את כל ההתקדמות?')){localStorage.removeItem('alicecool_progress');location.reload()}" style="width:100%;color:var(--muted)">
       אפס התקדמות
     </button>
   </div>`;
+}
+
+function activateFreeze() {
+  const p = getProgress();
+  if ((p.xp || 0) < 50) { showToast('❌ צריך לפחות 50 XP'); return; }
+  p.xp -= 50;
+  p.streakFreeze = true;
+  localStorage.setItem('alicecool_progress', JSON.stringify(p));
+  SFX.correct();
+  showToast('🧊 Streak Freeze הופעל!');
+  render();
 }
 
 // ══════════════════════════════════════
@@ -967,19 +1630,30 @@ function render() {
     quiz: renderQuiz,
     chat: renderChat,
     profile: renderProfile,
+    review: renderReview,
   };
   const fn = screens[state.screen];
   app.innerHTML = fn ? fn() : renderHome();
 
-  // Update nav highlight
-  const navMap = { home:'home', lessons:'lessons', series:'series', flash:'lessons', quiz:'lessons', chat:'chat', profile:'profile' };
+  // Nav highlight
+  const navMap = { home:'home', lessons:'lessons', series:'series', flash:'lessons', quiz:'lessons', chat:'chat', profile:'profile', review:'home' };
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   const activeNav = document.getElementById('nav-' + (navMap[state.screen] || state.screen));
   if (activeNav) activeNav.classList.add('active');
+
+  // Badge indicator for new achievements
+  const p = getProgress();
+  const newAchievements = ALL_ACHIEVEMENTS.filter(a => a.check(p) && (!p.achievements || !p.achievements[a.id]));
+  const badge = document.getElementById('nav-badge-profile');
+  if (badge) badge.style.display = newAchievements.length > 0 ? 'block' : 'none';
 }
 
 // INIT
 render();
+
+// Mute state
+const savedMute = getProgress().muted;
+if (savedMute) { SFX.toggleMute(); document.getElementById('mute-btn').textContent = '🔇'; }
 
 // Register Service Worker
 if ('serviceWorker' in navigator) {
