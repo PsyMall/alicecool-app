@@ -220,6 +220,25 @@
 
     /* ── SPIN WHEEL ── */
     @keyframes spinWheel { from { transform: rotate(0); } to { transform: rotate(1080deg); } }
+
+    /* ── LOCKED CATEGORY ── */
+    .category-locked { opacity:0.5; filter:grayscale(0.4); cursor:not-allowed !important; }
+
+    /* ── SPEAK BUTTON ── */
+    .speak-btn {
+      background: none; border: 2px solid var(--border); border-radius: 50%;
+      width: 36px; height: 36px; font-size: 18px; cursor: pointer; flex-shrink: 0;
+      transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .speak-btn:hover { background: var(--bg); border-color: var(--purple); }
+    .speak-btn:disabled { opacity: 0.5; cursor: wait; }
+    .speak-btn-light {
+      background: rgba(255,255,255,0.2); border: none; border-radius: 50%;
+      width: 40px; height: 40px; font-size: 20px; cursor: pointer; color: #fff;
+      transition: all 0.2s; display: inline-flex; align-items: center; justify-content: center;
+    }
+    .speak-btn-light:hover { background: rgba(255,255,255,0.35); }
+    .speak-btn-light:disabled { opacity: 0.5; cursor: wait; }
   </style>
 </head>
 <body class="min-h-screen">
@@ -432,6 +451,25 @@ if (typeof WORDS_DB !== 'undefined') {
       WORDS[level + '_' + catKey] = { ...catData, _level: level };
     }
   }
+}
+
+// ─── CATEGORY ORDER (for sequential locking) ───
+const CATEGORY_ORDER = {};
+if (typeof WORDS_DB !== 'undefined') {
+  for (const level of Object.keys(WORDS_DB)) {
+    CATEGORY_ORDER[level] = Object.keys(WORDS_DB[level]);
+  }
+}
+
+function isCategoryUnlocked(catKey) {
+  const level = catKey.split('_')[0];
+  const shortKey = catKey.substring(level.length + 1);
+  const order = CATEGORY_ORDER[level];
+  if (!order) return false;
+  const idx = order.indexOf(shortKey);
+  if (idx <= 0) return true; // first category always unlocked
+  const prevFullKey = level + '_' + order[idx - 1];
+  return getProgress()['done_' + prevFullKey] === true;
 }
 
 // ─── SERIES WORDS ───
@@ -994,18 +1032,20 @@ function renderLessons() {
       ${cats.map(([key, cat], idx) => {
         const done = p['done_' + key];
         const meta = LEVEL_META[cat._level];
+        const unlocked = isCategoryUnlocked(key);
         return `
-        <div class="card card-hover fade-in stagger-${Math.min(idx+1,5)}" style="cursor:pointer;border-right:4px solid ${done ? 'var(--success)' : meta.color};display:flex;align-items:center;gap:14px"
-             onclick="startFlash('${key}','lessons')">
-          <div style="font-size:36px">${cat.icon}</div>
+        <div class="card ${unlocked ? 'card-hover' : 'category-locked'} fade-in stagger-${Math.min(idx+1,5)}"
+             style="cursor:${unlocked ? 'pointer' : 'not-allowed'};border-right:4px solid ${done ? 'var(--success)' : (unlocked ? meta.color : '#ccc')};display:flex;align-items:center;gap:14px"
+             ${unlocked ? `onclick="startFlash('${key}','lessons')"` : ''}>
+          <div style="font-size:36px;${!unlocked ? 'filter:grayscale(0.6)' : ''}">${cat.icon}</div>
           <div style="flex:1">
-            <div style="font-weight:700;color:var(--navy);font-size:16px">${cat.title}</div>
+            <div style="font-weight:700;color:${unlocked ? 'var(--navy)' : '#aaa'};font-size:16px">${cat.title}</div>
             <div style="display:flex;align-items:center;gap:8px;margin-top:6px">
-              <span class="badge badge-level" style="background:${meta.color}15;color:${meta.color}">${meta.label}</span>
+              <span class="badge badge-level" style="background:${unlocked ? meta.color+'15' : '#eee'};color:${unlocked ? meta.color : '#aaa'}">${meta.label}</span>
               <span style="font-size:12px;color:var(--muted)">${cat.words.length} מילים</span>
             </div>
           </div>
-          <div style="font-size:24px">${done ? '✅' : '▶️'}</div>
+          <div style="font-size:24px">${done ? '✅' : (unlocked ? '▶️' : '🔒')}</div>
         </div>`;
       }).join('')}
     </div>
@@ -1048,8 +1088,9 @@ function renderSeriesDetail(catKey) {
     </div>
     <div style="display:flex;flex-direction:column;gap:8px">
       ${cat.words.map(w => `
-        <div class="card" style="padding:14px 18px;display:flex;justify-content:space-between;align-items:center">
-          <div>
+        <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:10px">
+          <button class="speak-btn" onclick="speakWord('${w.tr.replace(/'/g,"\\'")}',this)" title="השמע">🔊</button>
+          <div style="flex:1">
             <div style="font-weight:700;font-size:16px;color:var(--navy)">${w.tr}</div>
             <div style="font-size:12px;color:var(--muted);margin-top:2px">${w.pron}</div>
           </div>
@@ -1060,6 +1101,10 @@ function renderSeriesDetail(catKey) {
 }
 
 function startFlash(catKey, source) {
+  if (source === 'lessons' && !isCategoryUnlocked(catKey)) {
+    showToast('🔒 סיים את הקטגוריה הקודמת קודם');
+    return;
+  }
   SFX.click();
   state.flashIdx = 0;
   state.flashCategory = catKey;
@@ -1089,12 +1134,16 @@ function renderFlash() {
     <!-- FLIP CARD -->
     <div class="flip-card" id="fc" style="height:240px;margin-bottom:20px" onclick="document.getElementById('fc').classList.toggle('flipped');SFX.flip()">
       <div class="flip-card-inner" style="height:100%">
-        <div class="flip-front" style="background:linear-gradient(135deg,var(--navy),var(--purple))">
+        <div class="flip-front" style="background:linear-gradient(135deg,var(--navy),var(--purple));position:relative">
+          <button class="speak-btn-light" onclick="event.stopPropagation();speakWord('${w.tr.replace(/'/g,"\\'")}',this)"
+            style="position:absolute;top:12px;left:12px" title="השמע">🔊</button>
           <div style="font-size:11px;color:#9090c0;font-weight:700;letter-spacing:2px;margin-bottom:16px">TURKCE</div>
           <div style="font-size:38px;font-weight:900;color:#fff;text-align:center">${w.tr}</div>
           <div style="font-size:13px;color:#9090c0;margin-top:16px">לחץ להפוך</div>
         </div>
-        <div class="flip-back" style="background:#fff;border:3px solid var(--navy)">
+        <div class="flip-back" style="background:#fff;border:3px solid var(--navy);position:relative">
+          <button class="speak-btn" onclick="event.stopPropagation();speakWord('${w.tr.replace(/'/g,"\\'")}',this)"
+            style="position:absolute;top:12px;left:12px" title="השמע">🔊</button>
           <div style="font-size:11px;color:var(--muted);font-weight:700;letter-spacing:2px;margin-bottom:10px">עברית</div>
           <div style="font-size:30px;font-weight:900;color:var(--red);text-align:center">${w.he}</div>
           <div style="margin-top:14px;font-size:12px;color:var(--muted)">הגייה:</div>
@@ -1117,13 +1166,10 @@ function flashNav(dir) {
   const fc = document.getElementById('fc');
   if (fc) fc.classList.remove('flipped');
   if (dir > 0 && state.flashIdx >= cat.words.length - 1) {
-    saveProgress('done_' + state.flashCategory, true);
-    addXP(20);
     addDailyWord(cat.words.length);
     SFX.fanfare();
-    showConfetti(20);
-    showToast('🎉 סיימת! +20 XP');
-    setTimeout(() => navigate(state.flashSource === 'series' ? 'series' : 'lessons'), 1500);
+    showToast('📝 סיימת! עובר למבחן...');
+    setTimeout(() => startQuiz(state.flashCategory, state.flashSource), 1200);
     return;
   }
   SFX.flip();
@@ -1132,6 +1178,10 @@ function flashNav(dir) {
 }
 
 function startQuiz(catKey, source) {
+  if (source === 'lessons' && !isCategoryUnlocked(catKey)) {
+    showToast('🔒 סיים את הקטגוריה הקודמת קודם');
+    return;
+  }
   SFX.click();
   state.flashCategory = catKey;
   state.flashSource = source;
@@ -1234,26 +1284,60 @@ function renderQuizResult() {
   const score = state.quizScore;
   const total = state.quizTotal;
   const pct = Math.round((score / total) * 100);
-  const emoji = pct === 100 ? '🏆' : pct >= 80 ? '🌟' : pct >= 50 ? '👍' : '💪';
-  const msg = pct === 100 ? 'מושלם! אתה שולט בחומר!' : pct >= 80 ? 'מצוין! כמעט מושלם!' : pct >= 50 ? 'טוב! קצת עוד תרגול' : 'המשך לתרגל, אתה בדרך!';
+  const passed = pct >= 70;
+  const emoji = pct === 100 ? '🏆' : pct >= 70 ? '🌟' : pct >= 50 ? '👍' : '💪';
+  const msg = pct === 100 ? 'מושלם! אתה שולט בחומר!' : pct >= 70 ? 'עברת! הקטגוריה הבאה נפתחה!' : pct >= 50 ? 'כמעט... צריך 70% לעבור' : 'המשך לתרגל, אתה בדרך!';
 
   if (pct === 100) { saveProgress('perfectQuiz', true); }
-  addXP(pct >= 80 ? 30 : 10);
-  saveProgress('done_' + state.flashCategory, pct >= 80);
+  addXP(passed ? 30 : 10);
+  saveProgress('done_' + state.flashCategory, passed);
+
+  // Next category unlock message
+  let unlockMsg = '';
+  if (passed && state.flashSource === 'lessons') {
+    const level = state.flashCategory.split('_')[0];
+    const shortKey = state.flashCategory.substring(level.length + 1);
+    const order = CATEGORY_ORDER[level];
+    const idx = order ? order.indexOf(shortKey) : -1;
+    if (idx >= 0 && idx < order.length - 1) {
+      const nextKey = level + '_' + order[idx + 1];
+      const nextCat = WORDS[nextKey];
+      if (nextCat) {
+        unlockMsg = `<div class="card" style="background:#f0fdf4;border:2px solid var(--success);margin-bottom:16px;text-align:center;padding:16px">
+          <div style="font-size:36px;animation:unlockBounce 0.5s ease">🔓</div>
+          <div style="font-weight:700;color:#15803d;margin-top:8px">${nextCat.icon} ${nextCat.title} נפתחה!</div>
+        </div>`;
+      }
+    }
+  }
+
+  // Fail message
+  let failMsg = '';
+  if (!passed) {
+    failMsg = `<div class="card" style="background:#fef2f2;border:2px solid var(--danger);margin-bottom:16px;text-align:center;padding:14px">
+      <div style="font-weight:700;color:var(--danger);font-size:14px">צריך לפחות 70% כדי לפתוח את הקטגוריה הבאה</div>
+    </div>`;
+  }
 
   // Variable reward - bonus word
   const allWords = [];
   for (const cat of Object.values(WORDS)) { for (const w of cat.words) allWords.push(w); }
   const bonusWord = allWords[Math.floor(Math.random() * allWords.length)];
 
-  if (pct >= 80) { setTimeout(() => { SFX.fanfare(); showConfetti(25); }, 300); }
+  if (passed) { setTimeout(() => { SFX.fanfare(); showConfetti(25); }, 300); }
+
+  // Pronunciation quiz button
+  const hasPronAgent = getProgress().elevenlabs_pron_agent;
 
   return `
   <div class="fade-in" style="text-align:center;padding-top:20px">
     <div style="font-size:80px;margin-bottom:16px;animation:unlockBounce 0.5s ease">${emoji}</div>
     <h2 style="font-size:28px;font-weight:900;color:var(--navy);margin-bottom:8px">${score} / ${total}</h2>
     <div style="font-size:22px;color:var(--red);font-weight:800;margin-bottom:8px">${pct}%</div>
-    <p style="color:#555;margin-bottom:24px;font-size:16px">${msg}</p>
+    <p style="color:#555;margin-bottom:20px;font-size:16px">${msg}</p>
+
+    ${unlockMsg}
+    ${failMsg}
 
     <!-- BONUS WORD -->
     <div class="card" style="text-align:center;margin-bottom:20px;border:2px dashed var(--purple);background:#f8f7ff">
@@ -1267,6 +1351,12 @@ function renderQuizResult() {
       <button class="btn btn-outline" onclick="startQuiz('${state.flashCategory}','${state.flashSource}')">נסה שוב</button>
       <button class="btn btn-primary" onclick="navigate(state.flashSource==='series'?'series':'lessons')">המשך</button>
     </div>
+
+    ${hasPronAgent ? `
+    <button class="btn btn-secondary" onclick="startPronunciationQuiz('${state.flashCategory}','${state.flashSource}')"
+      style="width:100%;margin-top:12px">
+      🎤 תרגול הגייה (אופציונלי)
+    </button>` : ''}
   </div>`;
 }
 
@@ -1300,6 +1390,7 @@ function renderReview() {
         return `
         <div class="card" style="padding:14px 18px;display:flex;align-items:center;gap:12px">
           <div class="strength-dot ${strengthClass}"></div>
+          <button class="speak-btn" onclick="speakWord('${word.tr.replace(/'/g,"\\'")}',this)" title="השמע" style="width:32px;height:32px;font-size:16px">🔊</button>
           <div style="flex:1">
             <div style="font-weight:700;color:var(--navy)">${word.tr}</div>
             <div style="font-size:12px;color:var(--muted)">${word.pron}</div>
@@ -1338,6 +1429,20 @@ function renderChat() {
             <input id="el-agent" type="text" placeholder="agent_..." value="${p.elevenlabs_agent || ''}"
               style="width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:14px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr;outline:none;transition:border 0.2s"
               onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px">Voice ID (לביטוי מילים)</label>
+            <input id="el-voice" type="text" placeholder="voice_id..." value="${p.elevenlabs_voice || ''}"
+              style="width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:14px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr;outline:none;transition:border 0.2s"
+              onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">Voice ID לקול טורקי – ניתן למצוא ב-ElevenLabs Voice Library</div>
+          </div>
+          <div>
+            <label style="font-size:13px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px">Pronunciation Agent ID (אופציונלי)</label>
+            <input id="el-pron-agent" type="text" placeholder="agent_pron_..." value="${p.elevenlabs_pron_agent || ''}"
+              style="width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:14px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr;outline:none;transition:border 0.2s"
+              onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
+            <div style="font-size:11px;color:var(--muted);margin-top:4px">Agent ID נפרד לתרגול הגייה עם אליס – אופציונלי</div>
           </div>
           <button class="btn btn-primary" onclick="saveEL()" style="width:100%">שמור והפעל</button>
         </div>
@@ -1402,9 +1507,13 @@ function renderChat() {
 function saveEL() {
   const key = document.getElementById('el-key')?.value?.trim();
   const agent = document.getElementById('el-agent')?.value?.trim();
+  const voice = document.getElementById('el-voice')?.value?.trim();
+  const pronAgent = document.getElementById('el-pron-agent')?.value?.trim();
   if (!key || !agent) { alert('נא למלא גם API Key וגם Agent ID'); return; }
   saveProgress('elevenlabs_key', key);
   saveProgress('elevenlabs_agent', agent);
+  if (voice) saveProgress('elevenlabs_voice', voice);
+  if (pronAgent) saveProgress('elevenlabs_pron_agent', pronAgent);
   SFX.correct();
   showToast('✅ נשמר בהצלחה!');
   render();
@@ -1510,6 +1619,152 @@ async function startConversation() {
   } catch(e) {
     if (statusText) { statusText.textContent = '❌ שגיאה: ' + e.message; statusText.style.color = 'var(--danger)'; }
     if (btn) { btn.textContent = '🎙️ נסה שוב'; btn.onclick = startConversation; }
+  }
+}
+
+// ═══════════════════════════════════════
+//  TTS - Word Pronunciation (ElevenLabs)
+// ═══════════════════════════════════════
+const ttsCache = {};
+
+async function speakWord(turkishText, buttonEl) {
+  const p = getProgress();
+  const apiKey = p.elevenlabs_key;
+  const voiceId = p.elevenlabs_voice;
+
+  if (!apiKey || !voiceId) {
+    showToast('⚠️ הגדר Voice ID בהגדרות הבוט');
+    return;
+  }
+
+  // Check cache
+  if (ttsCache[turkishText]) {
+    new Audio(ttsCache[turkishText]).play();
+    return;
+  }
+
+  // Loading state
+  const origText = buttonEl ? buttonEl.textContent : '';
+  if (buttonEl) { buttonEl.textContent = '⏳'; buttonEl.disabled = true; }
+
+  try {
+    const resp = await fetch(
+      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
+      {
+        method: 'POST',
+        headers: {
+          'xi-api-key': apiKey,
+          'Content-Type': 'application/json',
+          'Accept': 'audio/mpeg'
+        },
+        body: JSON.stringify({
+          text: turkishText,
+          model_id: 'eleven_multilingual_v2',
+          voice_settings: { stability: 0.5, similarity_boost: 0.75 }
+        })
+      }
+    );
+    if (!resp.ok) throw new Error(resp.status);
+    const blob = await resp.blob();
+    const url = URL.createObjectURL(blob);
+    ttsCache[turkishText] = url;
+    new Audio(url).play();
+  } catch (e) {
+    console.error('TTS error:', e);
+    showToast('❌ שגיאה בהשמעת המילה');
+  } finally {
+    if (buttonEl) { buttonEl.textContent = origText || '🔊'; buttonEl.disabled = false; }
+  }
+}
+
+// ═══════════════════════════════════════
+//  PRONUNCIATION QUIZ (Optional)
+// ═══════════════════════════════════════
+function startPronunciationQuiz(catKey, source) {
+  state.flashCategory = catKey;
+  state.flashSource = source;
+  navigate('pronunciation');
+}
+
+function renderPronunciationQuiz() {
+  const p = getProgress();
+  const cat = state.flashSource === 'series' ? SERIES[state.flashCategory] : WORDS[state.flashCategory];
+
+  if (!p.elevenlabs_pron_agent) {
+    return `
+    <div class="fade-in" style="text-align:center;padding-top:40px">
+      <div style="font-size:48px;margin-bottom:16px">🎤</div>
+      <h2 style="font-size:20px;font-weight:800;color:var(--navy);margin-bottom:8px">תרגול הגייה</h2>
+      <p style="color:var(--muted);margin-bottom:24px">צריך להגדיר Pronunciation Agent ID בהגדרות הבוט</p>
+      <button class="btn btn-primary" onclick="navigate('chat')">עבור להגדרות</button>
+    </div>`;
+  }
+
+  return `
+  <div class="fade-in">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
+      <button onclick="navigate('lessons')" class="btn btn-ghost" style="padding:8px 14px;font-size:14px">← חזרה</button>
+      <span style="font-size:13px;color:var(--muted);font-weight:700">🎤 תרגול הגייה</span>
+    </div>
+
+    <div class="card" style="background:linear-gradient(135deg,#1a6b3a,#2d9f5b);text-align:center;padding:30px;margin-bottom:16px">
+      <div style="font-size:48px;margin-bottom:12px">🎤</div>
+      <div style="color:#fff;font-size:18px;font-weight:800;margin-bottom:6px">תרגול הגייה עם אליס</div>
+      <div style="color:#b0e8c0;font-size:13px;margin-bottom:20px">אליס תגיד מילה ואתה תחזור עליה</div>
+      <button class="btn btn-primary" id="start-pron-btn" onclick="startPronunciationBot()"
+        style="font-size:16px;padding:14px 36px">
+        🎙️ התחל תרגול
+      </button>
+    </div>
+
+    <div class="card" style="background:#f0fdf4">
+      <div style="font-weight:700;color:#1a6b3a;margin-bottom:8px">📋 מילים לתרגול:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        ${cat.words.slice(0, 10).map(w => `
+          <span style="background:#fff;border:1px solid #d1fae5;border-radius:12px;padding:6px 12px;font-size:13px;font-weight:600">${w.tr}</span>
+        `).join('')}
+        ${cat.words.length > 10 ? `<span style="color:var(--muted);font-size:13px;padding:6px">+${cat.words.length - 10} עוד</span>` : ''}
+      </div>
+    </div>
+
+    <div class="card" style="background:#fffbea;border:1px solid #fde68a;margin-top:12px">
+      <div style="font-size:12px;color:#92400e">💡 תרגול ההגייה לא משפיע על פתיחת קטגוריות – זה בונוס!</div>
+    </div>
+  </div>`;
+}
+
+async function startPronunciationBot() {
+  const p = getProgress();
+  const btn = document.getElementById('start-pron-btn');
+
+  if (!p.elevenlabs_pron_agent) { showToast('⚠️ חסר Pronunciation Agent ID'); return; }
+  if (btn) btn.textContent = '⏳ מתחבר...';
+
+  try {
+    if (!document.querySelector('script[src*="elevenlabs.io/convai"]')) {
+      await new Promise((resolve, reject) => {
+        const s = document.createElement('script');
+        s.src = 'https://elevenlabs.io/convai-widget/index.js';
+        s.async = true; s.onload = resolve; s.onerror = reject;
+        document.head.appendChild(s);
+      });
+    }
+    document.querySelectorAll('elevenlabs-convai').forEach(el => el.remove());
+    const widget = document.createElement('elevenlabs-convai');
+    widget.setAttribute('agent-id', p.elevenlabs_pron_agent);
+    document.body.appendChild(widget);
+
+    if (btn) {
+      btn.textContent = '🔴 סיים תרגול';
+      btn.onclick = () => {
+        document.querySelectorAll('elevenlabs-convai').forEach(el => el.remove());
+        navigate('lessons');
+      };
+    }
+    SFX.correct();
+  } catch(e) {
+    showToast('❌ שגיאה: ' + e.message);
+    if (btn) { btn.textContent = '🎙️ נסה שוב'; btn.onclick = startPronunciationBot; }
   }
 }
 
@@ -1631,12 +1886,13 @@ function render() {
     chat: renderChat,
     profile: renderProfile,
     review: renderReview,
+    pronunciation: renderPronunciationQuiz,
   };
   const fn = screens[state.screen];
   app.innerHTML = fn ? fn() : renderHome();
 
   // Nav highlight
-  const navMap = { home:'home', lessons:'lessons', series:'series', flash:'lessons', quiz:'lessons', chat:'chat', profile:'profile', review:'home' };
+  const navMap = { home:'home', lessons:'lessons', series:'series', flash:'lessons', quiz:'lessons', chat:'chat', profile:'profile', review:'home', pronunciation:'lessons' };
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   const activeNav = document.getElementById('nav-' + (navMap[state.screen] || state.screen));
   if (activeNav) activeNav.classList.add('active');
