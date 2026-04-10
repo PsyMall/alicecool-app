@@ -27,14 +27,50 @@
 ## קבצים בתיקייה
 - `index.html` – האפליקציה הראשית (HTML+CSS+JS + PWA meta tags + SW registration)
 - `words-data.js` – מאגר מילים (5,104 מילים, 4 רמות: A1/A2/B1/B2)
+- `sentences-data.js` – מאגר משפטים להרכבה (120 משפטים, 30 לכל רמה)
 - `manifest.json` – PWA manifest (שם, צבעים, אייקונים)
-- `sw.js` – Service Worker (cache-first, אופליין) – CACHE_NAME: alicecool-v3
+- `sw.js` – Service Worker (cache-first, אופליין) – CACHE_NAME: alicecool-v4
 - `worker.js` – קוד Cloudflare Worker שמשמש כ-proxy ל-ElevenLabs TTS (מסתיר את ה-API Key)
 - `icons/icon-192.svg` – אייקון 192x192
 - `icons/icon-512.svg` – אייקון 512x512
 - `CLAUDE.md` – תיעוד פרויקט (הקובץ הזה)
 - `לוגו.png` – לוגו המותג
 - `צבעי המותג.pdf` – מסמך צבעי המותג
+
+## מאגר משפטים (2026-04-10)
+- **sentences-data.js** – 120 משפטים, 30 לכל רמה (A1, A2, B1, B2)
+- מבנה: `{ he, tr, words }` – עברית, טורקית מלא, מערך מילים בסדר נכון
+- A1: מתחילים – ברכות, הצגה עצמית, הווה פשוט
+- A2: בסיסי – עבר, עתיד, פעולות יומיומיות
+- B1: בינוני – תנאים, חוות דעת, משפטי משנה
+- B2: מתקדם – תחביר מתקדם, נושאים מופשטים
+
+## תכונת הרכבת משפטים (2026-04-10)
+- **כפתור ניווט:** 🧩 משפטים (בתפריט תחתון, בין "שיעורים" ל"סדרות")
+- **כרטיס במסך הבית:** 🧩 הרכבת משפטים
+- **מסכים:**
+  - `renderSentences()` – בחירת רמה עם progress bar לכל רמה
+  - `renderSentQuiz()` – המשחק עצמו
+- **מצב (state):**
+  - `sentLvl` – הרמה הנוכחית
+  - `sentIdx` – אינדקס המשפט הנוכחי ברמה
+  - `sentShuffled` – מערך מעורבב של אינדקסי המילים
+  - `sentPlaced` – מערך המילים שהמשתמש שם בסדר
+  - `sentChecked` / `sentCorrect` – מצב בדיקה
+- **פונקציות:**
+  - `startSentencesLevel(level)` – מתחיל רמה (מוצא את המשפט האחרון שלא סומן)
+  - `initSentenceRound()` – מעורבב את המילים (Fisher-Yates)
+  - `placeSentTile(idx)` / `removeSentTile(idx)` – הזזת מילים
+  - `checkSentence()` – בודק, נותן XP אם נכון, מראה תשובה אם לא
+  - `nextSentence()` – מעבר למשפט הבא
+- **שמירה:** `sent_done_A1_0`, `sent_done_A1_1`... ב-localStorage; `sentencesCompleted` מונה כולל
+- **XP:** 10 נקודות לכל משפט נכון
+- **4 עיטורים חדשים:**
+  - 🧩 בנאי צעיר – משפט ראשון
+  - 📝 בנאי מתחיל – 10 משפטים
+  - 📜 בנאי מנוסה – 50 משפטים
+  - 🏗️ בנאי מאסטר – 100 משפטים
+- **הערה:** בפריוויו המקומי של Claude Code המשפטים לא תמיד עובדים בזמן עריכה (cache/timing), אבל **באתר החי GitHub Pages הכל עובד מושלם** – נבדק end-to-end.
 
 ## ארכיטקטורת TTS (2026-04-10)
 - **Worker URL:** https://alicecool-tts.moty-gotgilf.workers.dev/
@@ -202,10 +238,15 @@
     - הושלם מסך אודות אישי + כפתור שיתוף חכם (Web Share API + modal fallback)
     - API Token של Cloudflare **נמחק** בסוף השלב (אבטחה) – רק ה-Worker ממשיך לעבוד עצמאית
 17. ✅ Commit + Push ל-GitHub (81a61a1) – האתר החי מעודכן
+18. ✅ **הרכבת משפטים** (43e4a82) – תכונה חדשה (2026-04-10)
+    - 120 משפטים (30 לכל רמה)
+    - משחק drag-and-drop (click-to-place)
+    - 4 עיטורים חדשים
+    - נבדק end-to-end על האתר החי ✅
 
 ### ⏳ עצרנו כאן (2026-04-10 – סוף יום):
-שלב B הושלם במלואו. הכפתור 🔊 עובד דרך Cloudflare Worker ללא צורך בהגדרות לקוח.
-מסך האודות חדש עם כפתור שיתוף. האתר פרוס וחי.
+הרכבת משפטים הושלמה ופרוסה. המשתמש יכול לבנות משפטים ב-4 רמות.
+הבא בתור: שלב C – Firebase Auth + Firestore (מערכת משתמשים עם שמירת התקדמות בענן).
 
 ## שלבים הבאים (לפי סדר ביצוע)
 
