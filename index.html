@@ -1833,6 +1833,8 @@ function checkSentence() {
     checkAchievements();
     showToast('🎉 נכון! +10 XP');
     showConfetti();
+    // Auto-play the Turkish sentence pronunciation via ElevenLabs
+    setTimeout(() => speakWord(sentence.tr), 400);
   } else {
     SFX.wrong();
     showToast('❌ לא מדויק – ראו את התשובה הנכונה');

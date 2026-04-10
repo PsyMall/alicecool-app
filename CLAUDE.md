@@ -61,7 +61,7 @@
   - `startSentencesLevel(level)` – מתחיל רמה (מוצא את המשפט האחרון שלא סומן)
   - `initSentenceRound()` – מעורבב את המילים (Fisher-Yates)
   - `placeSentTile(idx)` / `removeSentTile(idx)` – הזזת מילים
-  - `checkSentence()` – בודק, נותן XP אם נכון, מראה תשובה אם לא
+  - `checkSentence()` – בודק, נותן XP אם נכון, מראה תשובה אם לא, ומשמיע אוטומטית את המשפט הטורקי דרך ElevenLabs (setTimeout 400ms)
   - `nextSentence()` – מעבר למשפט הבא
 - **שמירה:** `sent_done_A1_0`, `sent_done_A1_1`... ב-localStorage; `sentencesCompleted` מונה כולל
 - **XP:** 10 נקודות לכל משפט נכון
@@ -71,6 +71,14 @@
   - 📜 בנאי מנוסה – 50 משפטים
   - 🏗️ בנאי מאסטר – 100 משפטים
 - **הערה:** בפריוויו המקומי של Claude Code המשפטים לא תמיד עובדים בזמן עריכה (cache/timing), אבל **באתר החי GitHub Pages הכל עובד מושלם** – נבדק end-to-end.
+
+## השמעה אוטומטית למשפטים (2026-04-10)
+- כשמשתמש משלים משפט נכון (ב-`checkSentence()`), המשפט הטורקי המלא מושמע אוטומטית
+- השהייה של 400ms כדי לא להתנגש עם `SFX.correct()` (צליל ה-ding)
+- עובר דרך אותו `speakWord()` קיים → TTS Worker → ElevenLabs
+- נהנה מאותו cache בזיכרון (משפט לא נשלח פעמיים באותה session)
+- **הגבלת אורך ב-Worker:** 200 תווים (`worker.js:53`) כ-safety guard; המשפט הארוך ביותר במאגר הוא 48 תווים, אז אין בעיה
+- **השפעה על usage:** משפט ממוצע ≈ 30-50 תווים לעומת מילה ≈ 5-7 תווים → צריכת תווים ב-ElevenLabs גדלה משמעותית כשלומדים משפטים. לעקוב אחרי https://elevenlabs.io/app/subscription
 
 ## ארכיטקטורת TTS (2026-04-10)
 - **Worker URL:** https://alicecool-tts.moty-gotgilf.workers.dev/
@@ -243,35 +251,18 @@
     - משחק drag-and-drop (click-to-place)
     - 4 עיטורים חדשים
     - נבדק end-to-end על האתר החי ✅
-19. ✅ **Node.js v24.14.1 + npm 11.0.0 הותקנו** (2026-04-10)
-    - מיקום: `C:\Program Files\nodejs\`
-    - **חשוב:** Claude Code היה פתוח בזמן ההתקנה → ה-Bash לא ראה את PATH החדש
-    - **הפתרון:** המשתמש ביקש לסגור ולפתוח מחדש את Claude Code
-    - בסשן הבא, `node --version` אמור לעבוד ישירות
-    - לפני הסגירה נבדק: `"/c/Program Files/nodejs/node.exe" --version` → v24.14.1 ✅
+19. ✅ **Node.js v24.14.1 + npm 11.0.0 הותקנו** (2026-04-10) – זמינים ישירות ב-Bash אחרי restart
+20. ✅ **שרת פיתוח מקומי** (2026-04-10)
+    - `.claude/launch.json` עם `npx serve -l 5173 .`
+    - הפעלה: `preview_start` עם name `alicecool`
+    - מעכשיו – בדיקות end-to-end מקומיות לפני כל push
+21. ✅ **השמעה אוטומטית למשפטים** (2026-04-10)
+    - `checkSentence()` קורא ל-`speakWord(sentence.tr)` עם setTimeout 400ms כשהמשפט נכון
+    - נבדק מקומית end-to-end דרך preview_eval – הצלחה מלאה ✅
 
-### ⏳ עצרנו כאן (2026-04-10 – סוף יום):
-
-**המצב:**
-- הרכבת משפטים חיה באתר ופועלת מושלם
-- Node.js הותקן אבל Claude Code צריך restart כדי ש-PATH יתעדכן
-- המשתמש ביקש לתעד ואז לסגור ולפתוח מחדש את Claude Code
-
-**מה לעשות בשיחה הבאה (לפי סדר):**
-1. **לבדוק שNode.js עובד:** `node --version` + `npm --version` + `npx --version`
-   - אם עובד: ממשיכים
-   - אם לא עובד: להשתמש בנתיב מלא `"/c/Program Files/nodejs/node.exe"` או לבקש restart נוסף
-2. **להתחיל שרת פיתוח מקומי:** ליצור `.claude/launch.json` עם `npx serve` והפעלה דרך `preview_start`
-   - זה יפתור את בעיית הבדיקות בפריוויו (שהיתה היום עם המשפטים)
-   - מעכשיו, לפני כל push, בודקים מקומית
-3. **לעדכן CLAUDE.md** עם הערה שNode זמין ואיך להשתמש בו
-4. **להמשיך לשלב C: Firebase Auth + Firestore** (מערכת משתמשים)
-   - יצירת פרויקט Firebase
-   - Firebase Auth (Google + Email/Password)
-   - Firestore database
-   - מעבר מ-localStorage לסנכרון בענן
-
-**הערה חשובה:** בפריוויו הפנימי של Claude Code המשפטים "לא עבדו" (cache/timing). באתר החי הכל עובד. עם Node.js עכשיו יש לנו דרך טובה יותר לבדיקות מקומיות.
+### שלב נוכחי – ממתין להמשך:
+האתר פועל, משפטים משמיעים אוטומטית, Node + preview server מוכנים.
+**הבא בתור:** שלב C – Firebase Auth + Firestore (מערכת משתמשים).
 
 ## שלבים הבאים (לפי סדר ביצוע)
 
