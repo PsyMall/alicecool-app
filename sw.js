@@ -1,8 +1,9 @@
-const CACHE_NAME = 'alicecool-v3';
+const CACHE_NAME = 'alicecool-v4';
 const ASSETS = [
   './',
   './index.html',
   './words-data.js',
+  './sentences-data.js',
   './manifest.json',
   './icons/icon-192.svg',
   './icons/icon-512.svg',

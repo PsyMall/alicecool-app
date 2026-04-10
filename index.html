@@ -91,9 +91,9 @@
     }
     .nav-item {
       display: flex; flex-direction: column; align-items: center; gap: 2px;
-      padding: 8px 16px; border-radius: 16px; cursor: pointer;
-      transition: all 0.25s ease; font-size: 11px; font-weight: 600; color: var(--muted);
-      position: relative;
+      padding: 8px 10px; border-radius: 14px; cursor: pointer;
+      transition: all 0.25s ease; font-size: 10px; font-weight: 600; color: var(--muted);
+      position: relative; min-width: 0; flex: 1;
     }
     .nav-item.active {
       background: var(--navy); color: #fff;
@@ -260,6 +260,9 @@
   <div class="nav-item" onclick="navigate('lessons')" id="nav-lessons">
     <span class="nav-icon">📚</span><span>שיעורים</span>
   </div>
+  <div class="nav-item" onclick="navigate('sentences')" id="nav-sentences">
+    <span class="nav-icon">🧩</span><span>משפטים</span>
+  </div>
   <div class="nav-item" onclick="navigate('series')" id="nav-series">
     <span class="nav-icon">🎬</span><span>סדרות</span>
   </div>
@@ -276,6 +279,7 @@
      DATA
 ══════════════════════════════════════ -->
 <script src="words-data.js"></script>
+<script src="sentences-data.js"></script>
 <script>
 // ═══════════════════════════════════════
 //  SOUND ENGINE (Web Audio API)
@@ -629,6 +633,13 @@ const state = {
   seriesCategory: null,
   elevenlabsKey: '',
   elevenlabsAgentId: '',
+  // Sentence builder
+  sentLvl: 'A1',
+  sentIdx: 0,
+  sentShuffled: [],
+  sentPlaced: [],
+  sentChecked: false,
+  sentCorrect: false,
 };
 
 // ═══════════════════════════════════════
@@ -765,6 +776,10 @@ const ALL_ACHIEVEMENTS = [
   { id:'early_bird', icon:'🐦', name:'ציפור מוקדמת', desc:'למדת לפני 7:00', check: p => p.earlyBird },
   { id:'all_a1', icon:'🥉', name:'A1 מאסטר', desc:'סיימת את כל A1', check: p => { const a1cats = Object.keys(WORDS).filter(k => k.startsWith('A1_')); return a1cats.length > 0 && a1cats.every(k => p['done_'+k]); }},
   { id:'review_master', icon:'🔄', name:'חזרה מושלמת', desc:'חזרת על 20 מילים חלשות', check: p => (p.reviewCount||0) >= 20 },
+  { id:'first_sentence', icon:'🧩', name:'בנאי צעיר', desc:'הרכבת את המשפט הראשון', check: p => (p.sentencesCompleted||0) >= 1 },
+  { id:'ten_sentences', icon:'📝', name:'בנאי מתחיל', desc:'הרכבת 10 משפטים', check: p => (p.sentencesCompleted||0) >= 10 },
+  { id:'fifty_sentences', icon:'📜', name:'בנאי מנוסה', desc:'הרכבת 50 משפטים', check: p => (p.sentencesCompleted||0) >= 50 },
+  { id:'hundred_sentences', icon:'🏗️', name:'בנאי מאסטר', desc:'הרכבת 100 משפטים!', check: p => (p.sentencesCompleted||0) >= 100 },
 ];
 
 function checkAchievements() {
@@ -950,6 +965,11 @@ function renderHome() {
         <div style="font-size:32px;margin-bottom:6px">📚</div>
         <div style="font-weight:700;color:var(--navy);font-size:14px">שיעורים</div>
         <div style="font-size:12px;color:var(--muted)">${Object.keys(WORDS).length} קטגוריות</div>
+      </div>
+      <div class="card card-hover" style="cursor:pointer;text-align:center;padding:20px 12px" onclick="navigate('sentences')">
+        <div style="font-size:32px;margin-bottom:6px">🧩</div>
+        <div style="font-weight:700;color:var(--purple);font-size:14px">הרכבת משפטים</div>
+        <div style="font-size:12px;color:var(--muted)">120 משפטים</div>
       </div>
       <div class="card card-hover" style="cursor:pointer;text-align:center;padding:20px 12px" onclick="navigate('series')">
         <div style="font-size:32px;margin-bottom:6px">🎬</div>
@@ -1619,6 +1639,227 @@ async function speakWord(turkishText, buttonEl) {
   }
 }
 
+// ═══════════════════════════════════════
+//  SENTENCE BUILDER – Drag & Drop Puzzle
+// ═══════════════════════════════════════
+
+function sentencesProgress(level) {
+  const p = getProgress();
+  const total = (SENTENCES[level] || []).length;
+  let done = 0;
+  for (let i = 0; i < total; i++) {
+    if (p['sent_done_' + level + '_' + i]) done++;
+  }
+  return { done, total };
+}
+
+function renderSentences() {
+  const p = getProgress();
+  const levels = [
+    { key:'A1', name:'מתחילים',    color:'#10b981', desc:'ברכות, הצגה עצמית, הווה פשוט' },
+    { key:'A2', name:'בסיסי',      color:'#3b82f6', desc:'עבר, עתיד, פעולות יומיומיות' },
+    { key:'B1', name:'בינוני',     color:'#8b5cf6', desc:'דעות, רגשות, תחביר מורכב' },
+    { key:'B2', name:'מתקדם',      color:'#ec4899', desc:'תחביר מתקדם, נושאים מופשטים' },
+  ];
+
+  return `
+  <div class="fade-in">
+    <h2 style="font-size:24px;font-weight:900;color:var(--navy);margin-bottom:4px">🧩 הרכבת משפטים</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px">גררו מילים בטורקית לפי הסדר הנכון</p>
+
+    <div class="card" style="background:linear-gradient(135deg,var(--navy),var(--purple));color:#fff;padding:20px;text-align:center;margin-bottom:18px">
+      <div style="font-size:36px;margin-bottom:6px">🎯</div>
+      <div style="font-weight:800;font-size:16px;margin-bottom:4px">איך זה עובד?</div>
+      <div style="font-size:13px;color:#d4d0ff;line-height:1.6">
+        מוצג משפט בעברית.<br>
+        לחצו על המילים בטורקית לפי הסדר הנכון.<br>
+        10 XP לכל משפט נכון ✨
+      </div>
+    </div>
+
+    <div style="display:flex;flex-direction:column;gap:12px">
+      ${levels.map(lvl => {
+        const { done, total } = sentencesProgress(lvl.key);
+        const pct = total ? Math.round((done / total) * 100) : 0;
+        return `
+        <div class="card card-hover" style="cursor:pointer;padding:18px;border-right:5px solid ${lvl.color}" onclick="startSentencesLevel('${lvl.key}')">
+          <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+            <div>
+              <div style="font-weight:900;font-size:20px;color:var(--navy)">${lvl.key} – ${lvl.name}</div>
+              <div style="font-size:12px;color:var(--muted);margin-top:2px">${lvl.desc}</div>
+            </div>
+            <div style="background:${lvl.color};color:#fff;font-weight:800;font-size:12px;padding:6px 12px;border-radius:20px;white-space:nowrap">${done}/${total}</div>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${pct}%;background:${lvl.color}"></div>
+          </div>
+        </div>`;
+      }).join('')}
+    </div>
+  </div>`;
+}
+
+function startSentencesLevel(level) {
+  state.sentLvl = level;
+  // Find first unfinished sentence
+  const p = getProgress();
+  const list = SENTENCES[level] || [];
+  let startIdx = 0;
+  for (let i = 0; i < list.length; i++) {
+    if (!p['sent_done_' + level + '_' + i]) { startIdx = i; break; }
+    if (i === list.length - 1) startIdx = 0; // All done – start over
+  }
+  state.sentIdx = startIdx;
+  initSentenceRound();
+  navigate('sentQuiz');
+}
+
+function initSentenceRound() {
+  const sentence = SENTENCES[state.sentLvl][state.sentIdx];
+  if (!sentence) return;
+  const indices = sentence.words.map((_, i) => i);
+  // Fisher-Yates shuffle
+  for (let i = indices.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [indices[i], indices[j]] = [indices[j], indices[i]];
+  }
+  // Ensure we don't start with the correct order
+  if (indices.every((v, i) => v === i) && indices.length > 1) {
+    [indices[0], indices[1]] = [indices[1], indices[0]];
+  }
+  state.sentShuffled = indices;
+  state.sentPlaced = [];
+  state.sentChecked = false;
+  state.sentCorrect = false;
+}
+
+function renderSentQuiz() {
+  const sentence = SENTENCES[state.sentLvl] && SENTENCES[state.sentLvl][state.sentIdx];
+  if (!sentence) {
+    return `<div style="text-align:center;padding:40px">
+      <p style="color:var(--muted)">לא נמצא משפט</p>
+      <button class="btn btn-primary" onclick="navigate('sentences')" style="margin-top:16px">חזרה</button>
+    </div>`;
+  }
+
+  const total = SENTENCES[state.sentLvl].length;
+  const current = state.sentIdx + 1;
+  const pct = Math.round((current / total) * 100);
+  const placedIds = new Set(state.sentPlaced);
+  const bankWords = state.sentShuffled
+    .map((idx, sIdx) => ({ idx, shuffledPos: sIdx }))
+    .filter(t => !placedIds.has(t.idx));
+
+  return `
+  <div class="fade-in">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+      <button class="btn btn-ghost" onclick="navigate('sentences')" style="padding:8px 14px;font-size:13px">← חזרה</button>
+      <div style="font-size:12px;font-weight:700;color:var(--muted)">${state.sentLvl} · ${current}/${total}</div>
+    </div>
+
+    <div class="progress-bar" style="margin-bottom:20px"><div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--navy),var(--purple))"></div></div>
+
+    <!-- Prompt -->
+    <div class="card" style="background:linear-gradient(135deg,#f8f7ff,#eeedff);text-align:center;padding:26px 20px;margin-bottom:18px;border:2px solid var(--purple)">
+      <div style="font-size:12px;font-weight:700;color:var(--purple);margin-bottom:8px">תרגמו לטורקית:</div>
+      <div style="font-size:22px;font-weight:900;color:var(--navy);line-height:1.5">${sentence.he}</div>
+    </div>
+
+    <!-- Answer area -->
+    <div id="sent-answer-area" style="min-height:72px;border:2px dashed ${state.sentChecked ? (state.sentCorrect ? 'var(--success)' : 'var(--danger)') : 'var(--border)'};border-radius:16px;padding:12px;margin-bottom:20px;background:${state.sentChecked ? (state.sentCorrect ? '#f0fdf4' : '#fef2f2') : '#fafaff'};direction:ltr;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center">
+      ${state.sentPlaced.length === 0
+        ? `<div style="color:var(--muted);font-size:13px;font-family:'Heebo',sans-serif;direction:rtl">לחצו על המילים למטה לפי הסדר</div>`
+        : state.sentPlaced.map(idx => `
+          <button onclick="removeSentTile(${idx})" class="sent-tile sent-tile-placed" ${state.sentChecked ? 'disabled' : ''} style="background:#fff;border:2px solid var(--navy);color:var(--navy);font-weight:800;font-size:16px;padding:10px 16px;border-radius:14px;cursor:pointer;font-family:'Heebo',sans-serif;direction:ltr;box-shadow:0 3px 10px rgba(38,34,97,0.15);transition:all 0.2s">
+            ${escapeHtml(sentence.words[idx])}
+          </button>`).join('')}
+    </div>
+
+    <!-- Word bank -->
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:20px;direction:ltr;justify-content:center;min-height:54px">
+      ${bankWords.map(t => `
+        <button onclick="placeSentTile(${t.idx})" class="sent-tile sent-tile-bank" ${state.sentChecked ? 'disabled' : ''} style="background:linear-gradient(135deg,#fff,#f8f7ff);border:2px solid var(--purple);color:var(--navy);font-weight:800;font-size:16px;padding:10px 16px;border-radius:14px;cursor:pointer;font-family:'Heebo',sans-serif;direction:ltr;box-shadow:0 3px 10px rgba(64,60,116,0.15);transition:all 0.2s">
+          ${escapeHtml(sentence.words[t.idx])}
+        </button>`).join('')}
+    </div>
+
+    ${state.sentChecked ? `
+      ${!state.sentCorrect ? `
+        <div class="card" style="background:#fef2f2;border:1.5px solid var(--danger);margin-bottom:16px">
+          <div style="font-size:12px;font-weight:700;color:var(--danger);margin-bottom:4px">התשובה הנכונה:</div>
+          <div style="font-size:17px;font-weight:800;color:#991b1b;direction:ltr;text-align:left">${escapeHtml(sentence.tr)}</div>
+        </div>` : ''}
+      <button class="btn btn-primary" onclick="nextSentence()" style="width:100%;font-size:16px;padding:16px">
+        ${state.sentCorrect ? '✨ המשפט הבא' : 'המשך'}
+      </button>
+    ` : `
+      <button class="btn btn-primary" onclick="checkSentence()" style="width:100%;font-size:16px;padding:16px" ${state.sentPlaced.length === 0 ? 'disabled' : ''}>
+        ✓ בדוק
+      </button>
+    `}
+  </div>`;
+}
+
+function placeSentTile(idx) {
+  if (state.sentChecked) return;
+  if (state.sentPlaced.includes(idx)) return;
+  state.sentPlaced.push(idx);
+  SFX.click();
+  render();
+}
+
+function removeSentTile(idx) {
+  if (state.sentChecked) return;
+  state.sentPlaced = state.sentPlaced.filter(i => i !== idx);
+  SFX.click();
+  render();
+}
+
+function checkSentence() {
+  const sentence = SENTENCES[state.sentLvl][state.sentIdx];
+  const correct = sentence.words.map((_, i) => i);
+  const isCorrect = state.sentPlaced.length === correct.length && state.sentPlaced.every((v, i) => v === correct[i]);
+  state.sentChecked = true;
+  state.sentCorrect = isCorrect;
+
+  if (isCorrect) {
+    SFX.correct();
+    // Award XP and mark done
+    const p = getProgress();
+    p['sent_done_' + state.sentLvl + '_' + state.sentIdx] = true;
+    p.xp = (p.xp || 0) + 10;
+    p.sentencesCompleted = (p.sentencesCompleted || 0) + 1;
+    localStorage.setItem('alicecool_progress', JSON.stringify(p));
+    checkAchievements();
+    showToast('🎉 נכון! +10 XP');
+    showConfetti();
+  } else {
+    SFX.wrong();
+    showToast('❌ לא מדויק – ראו את התשובה הנכונה');
+  }
+  render();
+}
+
+function nextSentence() {
+  const list = SENTENCES[state.sentLvl];
+  // Advance to next unfinished (or next in line)
+  let next = state.sentIdx + 1;
+  if (next >= list.length) {
+    // Level complete
+    SFX.correct();
+    showToast('🏆 סיימת את כל המשפטים ברמה!');
+    navigate('sentences');
+    return;
+  }
+  state.sentIdx = next;
+  initSentenceRound();
+  render();
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
 function renderProfile() {
   const p = getProgress();
   const xp = p.xp || 0;
@@ -1737,12 +1978,14 @@ function render() {
     chat: renderChat,
     profile: renderProfile,
     review: renderReview,
+    sentences: renderSentences,
+    sentQuiz: renderSentQuiz,
   };
   const fn = screens[state.screen];
   app.innerHTML = fn ? fn() : renderHome();
 
   // Nav highlight
-  const navMap = { home:'home', lessons:'lessons', series:'series', flash:'lessons', quiz:'lessons', chat:'chat', profile:'profile', review:'home' };
+  const navMap = { home:'home', lessons:'lessons', series:'series', flash:'lessons', quiz:'lessons', chat:'chat', profile:'profile', review:'home', sentences:'sentences', sentQuiz:'sentences' };
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   const activeNav = document.getElementById('nav-' + (navMap[state.screen] || state.screen));
   if (activeNav) activeNav.classList.add('active');
