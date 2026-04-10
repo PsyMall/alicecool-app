@@ -264,7 +264,7 @@
     <span class="nav-icon">🎬</span><span>סדרות</span>
   </div>
   <div class="nav-item" onclick="navigate('chat')" id="nav-chat">
-    <span class="nav-icon">⚙️</span><span>הגדרות</span>
+    <span class="nav-icon">💜</span><span>אודות</span>
   </div>
   <div class="nav-item" onclick="navigate('profile')" id="nav-profile">
     <span class="nav-icon">👤</span><span>פרופיל</span>
@@ -759,7 +759,7 @@ const ALL_ACHIEVEMENTS = [
   { id:'five_cats', icon:'📚', name:'5 קטגוריות', desc:'סיימת 5 קטגוריות', check: p => Object.keys(p).filter(k => k.startsWith('done_') && p[k]).length >= 5 },
   { id:'ten_cats', icon:'🎓', name:'10 קטגוריות', desc:'סיימת 10 קטגוריות', check: p => Object.keys(p).filter(k => k.startsWith('done_') && p[k]).length >= 10 },
   { id:'twenty_cats', icon:'👑', name:'20 קטגוריות', desc:'סיימת 20 קטגוריות!', check: p => Object.keys(p).filter(k => k.startsWith('done_') && p[k]).length >= 20 },
-  { id:'chatty', icon:'💬', name:'שיחן', desc:'הפעלת את הבוט', check: p => !!p.elevenlabs_key },
+  { id:'chatty', icon:'🔊', name:'שיחן', desc:'שמעת הגייה של 10 מילים', check: p => (p.ttsPlays||0) >= 10 },
   { id:'freeze_used', icon:'🧊', name:'קרח!', desc:'השתמשת ב-Streak Freeze', check: p => p.usedFreeze },
   { id:'night_owl', icon:'🦉', name:'ינשוף לילה', desc:'למדת אחרי 23:00', check: p => p.nightOwl },
   { id:'early_bird', icon:'🐦', name:'ציפור מוקדמת', desc:'למדת לפני 7:00', check: p => p.earlyBird },
@@ -957,9 +957,9 @@ function renderHome() {
         <div style="font-size:12px;color:var(--muted)">8 קטגוריות</div>
       </div>
       <div class="card card-hover" style="cursor:pointer;text-align:center;padding:20px 12px" onclick="navigate('chat')">
-        <div style="font-size:32px;margin-bottom:6px">⚙️</div>
-        <div style="font-weight:700;color:#1a6b3a;font-size:14px">הגדרות קול</div>
-        <div style="font-size:12px;color:var(--muted)">ElevenLabs TTS</div>
+        <div style="font-size:32px;margin-bottom:6px">💜</div>
+        <div style="font-weight:700;color:#1a6b3a;font-size:14px">אודות</div>
+        <div style="font-size:12px;color:var(--muted)">הסיפור שלנו</div>
       </div>
       <div class="card card-hover" style="cursor:pointer;text-align:center;padding:20px 12px" onclick="navigate('profile')">
         <div style="font-size:32px;margin-bottom:6px">📊</div>
@@ -1395,260 +1395,195 @@ function renderReview() {
 }
 
 function renderChat() {
-  const p = getProgress();
-  const hasVoice = p.elevenlabs_key && p.elevenlabs_voice;
-
   return `
   <div class="fade-in">
-    <h2 style="font-size:24px;font-weight:900;color:var(--navy);margin-bottom:4px">⚙️ הגדרות קול</h2>
-    <p style="font-size:13px;color:var(--muted);margin-bottom:20px">חבר את ElevenLabs כדי לשמוע הגייה של מילים</p>
+    <h2 style="font-size:24px;font-weight:900;color:var(--navy);margin-bottom:4px">💜 אודות</h2>
+    <p style="font-size:13px;color:var(--muted);margin-bottom:20px">הסיפור שמאחורי Alicecool</p>
 
-    ${hasVoice ? `
-    <div class="card" style="background:#f0fdf4;border:2px solid var(--success);margin-bottom:16px;text-align:center;padding:20px">
-      <div style="font-size:32px;margin-bottom:8px">✅</div>
-      <div style="font-weight:700;color:#15803d;font-size:16px">מחובר!</div>
-      <div style="font-size:13px;color:#166534;margin-top:4px">לחץ 🔊 על כל מילה בשיעורים כדי לשמוע הגייה</div>
-    </div>` : `
-    <div class="card" style="background:#fef2f2;border:2px solid var(--danger);margin-bottom:16px;text-align:center;padding:20px">
-      <div style="font-size:32px;margin-bottom:8px">🔇</div>
-      <div style="font-weight:700;color:var(--danger);font-size:16px">לא מחובר</div>
-      <div style="font-size:13px;color:#991b1b;margin-top:4px">מלא את השדות למטה כדי להפעיל הגייה בקול</div>
-    </div>`}
-
-    <div class="card" style="margin-bottom:16px">
-      <div style="font-size:18px;font-weight:800;color:var(--navy);margin-bottom:14px">🔑 ElevenLabs TTS</div>
-      <div style="display:flex;flex-direction:column;gap:12px">
-        <div>
-          <label style="font-size:13px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px">API Key</label>
-          <input id="el-key" type="password" placeholder="xi-api-key-..." value="${p.elevenlabs_key || ''}"
-            style="width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:14px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr;outline:none;transition:border 0.2s"
-            onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">נמצא ב-ElevenLabs → Profile → API Key</div>
-        </div>
-        <div>
-          <label style="font-size:13px;font-weight:700;color:var(--navy);display:block;margin-bottom:4px">Voice ID</label>
-          <input id="el-voice" type="text" placeholder="voice_id..." value="${p.elevenlabs_voice || ''}"
-            style="width:100%;padding:12px 16px;border:2px solid var(--border);border-radius:14px;font-size:14px;font-family:'Heebo',sans-serif;direction:ltr;outline:none;transition:border 0.2s"
-            onfocus="this.style.borderColor='var(--purple)'" onblur="this.style.borderColor='var(--border)'">
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">Voice ID של קול טורקי – נמצא ב-ElevenLabs → Voices</div>
-        </div>
-        <button class="btn btn-primary" onclick="saveEL()" style="width:100%">💾 שמור</button>
+    <!-- Hero / Greeting -->
+    <div class="card" style="background:linear-gradient(135deg,var(--navy),var(--purple));color:#fff;text-align:center;padding:30px 22px;margin-bottom:16px">
+      <div style="font-size:56px;margin-bottom:12px">👋</div>
+      <div style="font-size:24px;font-weight:900;margin-bottom:12px">היי, אני אליס</div>
+      <div style="font-size:15px;color:#e4e0ff;line-height:1.8">
+        מעל חמש שנים אני מלמדת ישראלים לדבר טורקית.<br>
+        הקהל הישראלי הוא האהבה שלי 💜<br>
+        ואני מאוד נהנית ללמד אותם את השפה.
       </div>
     </div>
 
-    <div class="card" style="background:#f8f7ff">
-      <div style="font-weight:800;color:var(--navy);font-size:16px;margin-bottom:14px">📋 איך מגדירים?</div>
-      ${[
-        ['1','היכנס ל-ElevenLabs.io והתחבר'],
-        ['2','לחץ פרופיל ← "Profile + API Key" ← העתק'],
-        ['3','לך ל-Voices ← חפש קול טורקי ← העתק Voice ID'],
-        ['4','חזור הנה, הדבק ולחץ שמור!'],
-      ].map(([n, t]) => `
-        <div style="display:flex;gap:10px;align-items:flex-start;margin-bottom:10px">
-          <div style="min-width:28px;height:28px;border-radius:50%;background:var(--navy);color:#fff;font-size:12px;font-weight:700;display:flex;align-items:center;justify-content:center;flex-shrink:0">${n}</div>
-          <div style="font-size:13px;color:#444;line-height:1.5">${t}</div>
-        </div>`).join('')}
+    <!-- Background / Academic -->
+    <div class="card" style="margin-bottom:16px">
+      <div style="font-weight:900;color:var(--navy);font-size:17px;margin-bottom:10px">🎓 הרקע שלי</div>
+      <div style="font-size:14px;color:#444;line-height:1.8;margin-bottom:16px">
+        אני אוהבת שפות מכל הלב.<br>
+        בעלת תואר בהוראה מאוניברסיטת <strong>אדנה</strong> שבטורקיה – בהתמחות הוראת השפה הגרמנית.
+      </div>
+
+      <div style="font-weight:700;color:var(--navy);font-size:13px;margin-bottom:10px">🌍 שפות שאני דוברת:</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px">
+        ${['טורקית','אנגלית','גרמנית','כורדית','קוריאנית'].map(lang => `
+          <span style="background:linear-gradient(135deg,#f8f7ff,#eeedff);border:1.5px solid var(--purple);color:var(--navy);font-weight:700;font-size:13px;padding:8px 16px;border-radius:20px;white-space:nowrap">${lang}</span>
+        `).join('')}
+      </div>
+      <div style="background:#fffbea;border:1px dashed #fde68a;border-radius:12px;padding:10px 14px;font-size:12px;color:#92400e;line-height:1.6">
+        💛 וגם קצת עברית – שלמדתי מהתלמידים שלי לאורך השנים 😊
+      </div>
     </div>
 
-    ${hasVoice ? `
-    <button class="btn btn-ghost" onclick="clearEL()" style="width:100%;margin-top:12px;color:var(--muted)">
-      אפס הגדרות
-    </button>` : ''}
+    <!-- Why -->
+    <div class="card" style="background:#f8f7ff;margin-bottom:16px">
+      <div style="font-weight:900;color:var(--navy);font-size:17px;margin-bottom:10px">💜 למה בניתי את Alicecool?</div>
+      <div style="font-size:14px;color:#444;line-height:1.8">
+        בניתי את האפליקציה הזו מתוך רצון להנגיש את השפה בדרך קלה ומהנה לקהל הישראלי שלי 🌟
+      </div>
+    </div>
+
+    <!-- Share -->
+    <div class="card" style="background:linear-gradient(135deg,#fff5f7,#fef2f2);border:2px solid #fecaca;margin-bottom:16px">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:40px;margin-bottom:8px">📢</div>
+        <div style="font-weight:900;color:var(--red);font-size:18px;line-height:1.5;margin-bottom:10px">אשמח שתשתפו אותה<br>עם חבריכם 💜</div>
+        <div style="font-size:13px;color:#991b1b;line-height:1.7">
+          שתפו ב-<strong>Facebook</strong>, <strong>Instagram</strong>, <strong>TikTok</strong><br>
+          או בכל מקום אחר שתרצו ✨
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <button class="btn btn-primary" onclick="smartShare()" style="background:linear-gradient(135deg,var(--navy),var(--purple));width:100%;font-size:16px;padding:16px">
+          📱 שתף עכשיו
+        </button>
+        <button class="btn btn-secondary" onclick="copyShareLink()" id="copy-link-btn" style="width:100%;font-size:14px">
+          🔗 העתק לינק
+        </button>
+      </div>
+    </div>
+
+    <!-- Signature -->
+    <div style="text-align:center;padding:20px 10px;color:var(--muted);font-size:14px;line-height:1.8">
+      תודה שאת/ה כאן 🌟<br>
+      <span style="color:var(--purple);font-weight:800;font-size:16px">— אליס</span>
+    </div>
   </div>`;
 }
 
-function saveEL() {
-  const key = document.getElementById('el-key')?.value?.trim();
-  const voice = document.getElementById('el-voice')?.value?.trim();
-  if (!key || !voice) { alert('נא למלא גם API Key וגם Voice ID'); return; }
-  saveProgress('elevenlabs_key', key);
-  saveProgress('elevenlabs_voice', voice);
-  SFX.correct();
-  showToast('✅ נשמר! כפתור 🔊 פעיל בשיעורים');
-  render();
-}
-function clearEL() {
-  saveProgress('elevenlabs_key', '');
-  saveProgress('elevenlabs_agent', '');
-  render();
-}
+const SHARE_URL = 'https://psymall.github.io/alicecool-app/';
+const SHARE_TITLE = 'Alicecool – לומדים טורקית בכיף 💜';
+const SHARE_MESSAGE = '💜 Alicecool – לומדים טורקית בכיף!\n\nאפליקציה מעולה עם מעל 5,000 מילים, הגייה טורקית אמיתית, מבחנים, רצפים ועיטורים.\nבנתה אותה אליס – מורה עם מעל 5 שנות ניסיון בהוראת השפה לקהל הישראלי.\n\n👇 נסו בעצמכם:\n' + SHARE_URL;
 
-function showPrompt() {
-  const prompt = `You are a friendly Turkish language teacher named "Alice" (אליס).
-You help Hebrew speakers learn Turkish in a fun and encouraging way.
-You support both voice conversations AND text chat.
-
-CRITICAL BEHAVIOR RULES:
-
-1. KEEP RESPONSES SHORT. Maximum 2-3 sentences per turn. Then STOP and WAIT for the user to respond. Do NOT give long lectures or monologues.
-2. LISTEN MORE THAN YOU TALK. After every response, ask the user a short question or wait for them to speak.
-3. SPEAK MOSTLY IN HEBREW. You are teaching Hebrew speakers – they need to understand you! Use Hebrew as your main language. Add Turkish words and phrases gradually.
-4. Only use full Turkish sentences when practicing a specific phrase with the user. Always follow Turkish with Hebrew translation.
-
-CONVERSATION FLOW:
-5. Start by greeting in Hebrew: "שלום! אני אליס, המורה שלך לטורקית!"
-6. Ask gender: "אני פונה אליך בלשון זכר או נקבה?"
-7. Then ask what they want to learn today – give short options.
-8. Teach ONE thing at a time. Say the Turkish word/phrase, translate to Hebrew, and let the user repeat.
-
-GENDER ADAPTATION:
-9. Detect gender from user's first answer or Hebrew verb forms.
-10. ALL Hebrew must use correct grammatical gender throughout:
-   - Male: אתה, למדת, יודע, רוצה, מעולה, הצלחת, נהדר
-   - Female: את, למדת, יודעת, רוצה, מעולה, הצלחת, נהדרת
-
-TEACHING STYLE:
-11. Correct mistakes gently in Hebrew – say what was wrong and give the correct form.
-12. Keep Turkish sentences simple – beginner-intermediate level.
-13. Encourage frequently in Hebrew.
-14. If user speaks Hebrew, respond in Hebrew and teach the Turkish equivalent.
-
-VOICE MODE RULES:
-15. Speak SLOWLY and CLEARLY.
-16. After saying a Turkish phrase, PAUSE and let the user repeat it.
-17. Do NOT ramble. Short turns only.
-
-EXAMPLE TURN:
-User: "שלום"
-Alice: "שלום! אני אליס 😊 אני פונה אליך בלשון זכר או נקבה?"
-User: "זכר"
-Alice: "מעולה! אז מה נלמד היום? אפשר: מילים בסיסיות, משפטים לטיול, או שיחה חופשית?"
-User: "מילים בסיסיות"
-Alice: "יופי! נתחיל עם שלום בטורקית: Merhaba – מרחבה. נסה להגיד את זה!"`;
-
-  const modal = document.createElement('div');
-  modal.className = 'celebration-overlay';
-  modal.innerHTML = `
-    <div style="background:#fff;border-radius:20px;padding:24px;max-width:480px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
-      <div style="font-weight:900;font-size:18px;color:var(--navy);margin-bottom:14px">📋 System Prompt</div>
-      <textarea readonly style="width:100%;height:260px;font-size:12px;border:2px solid var(--border);border-radius:12px;padding:12px;font-family:monospace;direction:ltr;resize:none;outline:none">${prompt}</textarea>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
-        <button class="btn btn-secondary" onclick="navigator.clipboard.writeText(document.querySelector('textarea').value);this.textContent='✅ הועתק!'">📋 העתק</button>
-        <button class="btn btn-primary" onclick="this.closest('.celebration-overlay').remove()">סגור</button>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-}
-
-function showPronunciationPrompt() {
-  const prompt = `You are "Alice" (אליס), a Turkish pronunciation coach for Hebrew speakers.
-Your ONLY job is to help users practice PRONOUNCING Turkish words correctly.
-
-LANGUAGE RULES:
-1. Speak in BOTH Turkish and Hebrew. Always give the Hebrew translation.
-2. Keep responses SHORT – 1-2 sentences max. Then WAIT for the user to speak.
-3. You are patient, encouraging, and supportive.
-
-PRONUNCIATION DRILL FLOW:
-4. Start by greeting: "שלום! אני אליס. בואו נתרגל הגייה בטורקית! אני אגיד מילה ואתה תחזור עליי. מוכן?"
-5. Say ONE Turkish word slowly and clearly, then its Hebrew meaning.
-   Example: "Merhaba – שלום. עכשיו אתה, תגיד: Merhaba"
-6. WAIT for the user to repeat.
-7. After the user speaks:
-   - If CORRECT: praise in Hebrew ("מצוין! ההגייה מושלמת!") and move to the next word.
-   - If CLOSE but not perfect: say what needs fixing. Example: "כמעט! שים לב ל-'h' – זה Mer-HA-ba, עם דגש על HA. נסה שוב!"
-   - If WRONG: say the word again slowly, break it into syllables. Example: "בוא ננסה שוב: Mer - ha - ba. לאט, הברה אחרי הברה."
-8. After 3 correct words in a row, praise with enthusiasm: "שלושה ברצף! אתה מתקדם מעולה!"
-9. After 5 words practiced, offer a short break: "תרגלנו 5 מילים! רוצה להמשיך או לסיים?"
-
-PRONUNCIATION TIPS TO GIVE:
-- ş = "ש" (כמו שלום)
-- ç = "צ'" (כמו צ'יפס)
-- ö = בין "או" ל"אי" (עגל את השפתיים ותגיד "אי")
-- ü = בין "או" ל"אי" (עגל את השפתיים ותגיד "אי")
-- ğ = almost silent, just lengthens the vowel before it
-- ı (without dot) = a deep "uh" sound, between "א" and "ה"
-- c = "ג'" (כמו ג'ינס)
-
-VOICE RULES:
-10. Speak SLOWLY and CLEARLY when saying Turkish words.
-11. PAUSE between syllables when demonstrating pronunciation.
-12. Exaggerate sounds slightly so the user can hear the difference.
-13. ONE word at a time. Never rush.
-
-GENDER ADAPTATION:
-14. Detect gender from user's Hebrew and adapt:
-   - Male: אתה, נסה, תגיד, מצוין, הצלחת
-   - Female: את, נסי, תגידי, מצוינת, הצלחת
-
-EXAMPLE SESSION:
-Alice: "שלום! בואו נתרגל הגייה. אני אגיד מילה ואתה תחזור עליי. מוכן?"
-User: "כן"
-Alice: "יופי! המילה הראשונה: Günaydın – בוקר טוב. תגיד: Günaydın"
-User: *says "Gunaydin"*
-Alice: "כמעט מושלם! רק שים לב – הü בתחילה נשמע כמו 'גיו'. תנסה שוב: Gü-nay-dın"
-User: *says it correctly*
-Alice: "מצוין! בדיוק ככה! הלאה: Teşekkürler – תודה. תגיד: Teşekkürler"`;
-
-  const modal = document.createElement('div');
-  modal.className = 'celebration-overlay';
-  modal.innerHTML = `
-    <div style="background:#fff;border-radius:20px;padding:24px;max-width:480px;width:92%;max-height:80vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.2)">
-      <div style="font-weight:900;font-size:18px;color:#1a6b3a;margin-bottom:14px">🎤 Pronunciation Agent Prompt</div>
-      <textarea readonly id="pron-prompt-text" style="width:100%;height:300px;font-size:12px;border:2px solid var(--border);border-radius:12px;padding:12px;font-family:monospace;direction:ltr;resize:none;outline:none">${prompt}</textarea>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
-        <button class="btn btn-secondary" onclick="navigator.clipboard.writeText(document.getElementById('pron-prompt-text').value);this.textContent='✅ הועתק!'">📋 העתק</button>
-        <button class="btn btn-primary" onclick="this.closest('.celebration-overlay').remove()">סגור</button>
-      </div>
-    </div>`;
-  document.body.appendChild(modal);
-}
-
-async function startConversation() {
-  const p = getProgress();
-  const btn = document.getElementById('start-chat-btn');
-  const statusDiv = document.getElementById('chat-status');
-  const statusText = document.getElementById('chat-status-text');
-
-  if (!p.elevenlabs_key || !p.elevenlabs_agent) { alert('חסר API Key או Agent ID'); return; }
-
-  if (btn) btn.textContent = '⏳ מתחבר...';
-  if (statusDiv) statusDiv.style.display = 'block';
-  if (statusText) statusText.textContent = 'מתחבר לבוט...';
-
-  try {
-    if (!document.querySelector('script[src*="elevenlabs.io/convai"]')) {
-      await new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = 'https://elevenlabs.io/convai-widget/index.js';
-        s.async = true; s.onload = resolve; s.onerror = reject;
-        document.head.appendChild(s);
+async function smartShare() {
+  SFX.click();
+  // Try Web Share API first (mobile / HTTPS)
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: SHARE_TITLE,
+        text: SHARE_MESSAGE,
+        url: SHARE_URL
       });
+      SFX.correct();
+      return;
+    } catch (e) {
+      if (e.name === 'AbortError') return; // User cancelled
+      // Other errors – fall through to modal
     }
-    document.querySelectorAll('elevenlabs-convai').forEach(el => el.remove());
-    const widget = document.createElement('elevenlabs-convai');
-    widget.setAttribute('agent-id', p.elevenlabs_agent);
-    document.body.appendChild(widget);
+  }
+  // Fallback: show modal with share text (works everywhere)
+  openShareModal();
+}
 
-    if (statusText) statusText.textContent = '✅ מחובר! הבוט מוכן';
-    if (btn) {
-      btn.textContent = '🔴 סיים שיחה';
-      btn.onclick = () => {
-        document.querySelectorAll('elevenlabs-convai').forEach(el => el.remove());
-        location.reload();
-      };
+function openShareModal() {
+  const modal = document.createElement('div');
+  modal.className = 'celebration-overlay';
+  modal.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;align-items:center;justify-content:center;z-index:9999;padding:20px';
+  modal.innerHTML = `
+    <div style="background:#fff;border-radius:20px;padding:24px;max-width:460px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,0.3)">
+      <div style="text-align:center;margin-bottom:16px">
+        <div style="font-size:42px;margin-bottom:6px">📢</div>
+        <div style="font-weight:900;font-size:18px;color:var(--navy)">שתף את Alicecool</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px">העתק את ההודעה והדבק היכן שתרצה</div>
+      </div>
+      <textarea id="share-text-area" readonly style="width:100%;height:180px;font-size:13px;border:2px solid var(--border);border-radius:14px;padding:14px;font-family:'Heebo',sans-serif;line-height:1.6;resize:none;outline:none;direction:rtl;background:#fafafa">${SHARE_MESSAGE}</textarea>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:14px">
+        <button class="btn btn-primary" onclick="copyFromModal()" id="modal-copy-btn">
+          📋 העתק הכל
+        </button>
+        <button class="btn btn-ghost" onclick="closeShareModal()">
+          סגור
+        </button>
+      </div>
+      <div style="text-align:center;margin-top:14px;font-size:12px;color:var(--muted);line-height:1.6">
+        💡 אפשר לשתף ב-Facebook, Instagram, TikTok<br>או בכל אפליקציה אחרת שתרצה
+      </div>
+    </div>`;
+  modal.onclick = (e) => { if (e.target === modal) closeShareModal(); };
+  document.body.appendChild(modal);
+  // Auto-select the text
+  setTimeout(() => {
+    const ta = document.getElementById('share-text-area');
+    if (ta) { ta.focus(); ta.select(); }
+  }, 100);
+}
+
+function closeShareModal() {
+  const modal = document.querySelector('.celebration-overlay');
+  if (modal) modal.remove();
+}
+
+function copyFromModal() {
+  const ta = document.getElementById('share-text-area');
+  if (!ta) return;
+  ta.select();
+  ta.setSelectionRange(0, 99999); // Mobile
+  let success = false;
+  try {
+    // Modern API first
+    if (navigator.clipboard && window.isSecureContext) {
+      navigator.clipboard.writeText(SHARE_MESSAGE);
+      success = true;
+    } else {
+      // Legacy fallback – works on http:// and file://
+      success = document.execCommand('copy');
     }
+  } catch (e) {
+    success = false;
+  }
+  const btn = document.getElementById('modal-copy-btn');
+  if (btn) {
+    btn.textContent = success ? '✅ הועתק!' : '❌ לא הצלחתי – העתק ידנית';
+    btn.style.background = success ? 'var(--success)' : 'var(--danger)';
+  }
+  if (success) {
     SFX.correct();
-  } catch(e) {
-    if (statusText) { statusText.textContent = '❌ שגיאה: ' + e.message; statusText.style.color = 'var(--danger)'; }
-    if (btn) { btn.textContent = '🎙️ נסה שוב'; btn.onclick = startConversation; }
+    setTimeout(closeShareModal, 1200);
+  }
+}
+
+function copyShareLink() {
+  // Button on the About screen – try modern, fall back to modal
+  if (navigator.clipboard && window.isSecureContext) {
+    navigator.clipboard.writeText(SHARE_MESSAGE).then(() => {
+      const btn = document.getElementById('copy-link-btn');
+      if (btn) {
+        btn.textContent = '✅ הועתק!';
+        setTimeout(() => { btn.textContent = '🔗 העתק לינק'; }, 2000);
+      }
+      showToast('✅ הודעת השיתוף הועתקה!');
+      SFX.correct();
+    }).catch(() => openShareModal());
+  } else {
+    openShareModal();
   }
 }
 
 // ═══════════════════════════════════════
-//  TTS - Word Pronunciation (ElevenLabs)
+//  TTS - Word Pronunciation (via Cloudflare Worker)
+//  API key is hidden server-side in the Worker.
 // ═══════════════════════════════════════
+const TTS_WORKER_URL = 'https://alicecool-tts.moty-gotgilf.workers.dev/';
 const ttsCache = {};
 
 async function speakWord(turkishText, buttonEl) {
-  const p = getProgress();
-  const apiKey = p.elevenlabs_key;
-  const voiceId = p.elevenlabs_voice;
-
-  if (!apiKey || !voiceId) {
-    showToast('⚠️ הגדר Voice ID בהגדרות הבוט');
-    return;
-  }
+  if (!turkishText) return;
 
   // Check cache
   if (ttsCache[turkishText]) {
@@ -1661,123 +1596,26 @@ async function speakWord(turkishText, buttonEl) {
   if (buttonEl) { buttonEl.textContent = '⏳'; buttonEl.disabled = true; }
 
   try {
-    const resp = await fetch(
-      `https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`,
-      {
-        method: 'POST',
-        headers: {
-          'xi-api-key': apiKey,
-          'Content-Type': 'application/json',
-          'Accept': 'audio/mpeg'
-        },
-        body: JSON.stringify({
-          text: turkishText,
-          model_id: 'eleven_multilingual_v2',
-          voice_settings: { stability: 0.5, similarity_boost: 0.75 }
-        })
-      }
-    );
-    if (!resp.ok) throw new Error(resp.status);
+    const resp = await fetch(TTS_WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: turkishText })
+    });
+    if (!resp.ok) throw new Error('TTS ' + resp.status);
     const blob = await resp.blob();
     const url = URL.createObjectURL(blob);
     ttsCache[turkishText] = url;
     new Audio(url).play();
+    // Track plays for the 'chatty' achievement
+    const p = getProgress();
+    p.ttsPlays = (p.ttsPlays || 0) + 1;
+    localStorage.setItem('alicecool_progress', JSON.stringify(p));
+    checkAchievements();
   } catch (e) {
     console.error('TTS error:', e);
     showToast('❌ שגיאה בהשמעת המילה');
   } finally {
     if (buttonEl) { buttonEl.textContent = origText || '🔊'; buttonEl.disabled = false; }
-  }
-}
-
-// ═══════════════════════════════════════
-//  PRONUNCIATION QUIZ (Optional)
-// ═══════════════════════════════════════
-function startPronunciationQuiz(catKey, source) {
-  state.flashCategory = catKey;
-  state.flashSource = source;
-  navigate('pronunciation');
-}
-
-function renderPronunciationQuiz() {
-  const p = getProgress();
-  const cat = state.flashSource === 'series' ? SERIES[state.flashCategory] : WORDS[state.flashCategory];
-
-  if (!p.elevenlabs_pron_agent) {
-    return `
-    <div class="fade-in" style="text-align:center;padding-top:40px">
-      <div style="font-size:48px;margin-bottom:16px">🎤</div>
-      <h2 style="font-size:20px;font-weight:800;color:var(--navy);margin-bottom:8px">תרגול הגייה</h2>
-      <p style="color:var(--muted);margin-bottom:24px">צריך להגדיר Pronunciation Agent ID בהגדרות הבוט</p>
-      <button class="btn btn-primary" onclick="navigate('chat')">עבור להגדרות</button>
-    </div>`;
-  }
-
-  return `
-  <div class="fade-in">
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px">
-      <button onclick="navigate('lessons')" class="btn btn-ghost" style="padding:8px 14px;font-size:14px">← חזרה</button>
-      <span style="font-size:13px;color:var(--muted);font-weight:700">🎤 תרגול הגייה</span>
-    </div>
-
-    <div class="card" style="background:linear-gradient(135deg,#1a6b3a,#2d9f5b);text-align:center;padding:30px;margin-bottom:16px">
-      <div style="font-size:48px;margin-bottom:12px">🎤</div>
-      <div style="color:#fff;font-size:18px;font-weight:800;margin-bottom:6px">תרגול הגייה עם אליס</div>
-      <div style="color:#b0e8c0;font-size:13px;margin-bottom:20px">אליס תגיד מילה ואתה תחזור עליה</div>
-      <button class="btn btn-primary" id="start-pron-btn" onclick="startPronunciationBot()"
-        style="font-size:16px;padding:14px 36px">
-        🎙️ התחל תרגול
-      </button>
-    </div>
-
-    <div class="card" style="background:#f0fdf4">
-      <div style="font-weight:700;color:#1a6b3a;margin-bottom:8px">📋 מילים לתרגול:</div>
-      <div style="display:flex;flex-wrap:wrap;gap:8px">
-        ${cat.words.slice(0, 10).map(w => `
-          <span style="background:#fff;border:1px solid #d1fae5;border-radius:12px;padding:6px 12px;font-size:13px;font-weight:600">${w.tr}</span>
-        `).join('')}
-        ${cat.words.length > 10 ? `<span style="color:var(--muted);font-size:13px;padding:6px">+${cat.words.length - 10} עוד</span>` : ''}
-      </div>
-    </div>
-
-    <div class="card" style="background:#fffbea;border:1px solid #fde68a;margin-top:12px">
-      <div style="font-size:12px;color:#92400e">💡 תרגול ההגייה לא משפיע על פתיחת קטגוריות – זה בונוס!</div>
-    </div>
-  </div>`;
-}
-
-async function startPronunciationBot() {
-  const p = getProgress();
-  const btn = document.getElementById('start-pron-btn');
-
-  if (!p.elevenlabs_pron_agent) { showToast('⚠️ חסר Pronunciation Agent ID'); return; }
-  if (btn) btn.textContent = '⏳ מתחבר...';
-
-  try {
-    if (!document.querySelector('script[src*="elevenlabs.io/convai"]')) {
-      await new Promise((resolve, reject) => {
-        const s = document.createElement('script');
-        s.src = 'https://elevenlabs.io/convai-widget/index.js';
-        s.async = true; s.onload = resolve; s.onerror = reject;
-        document.head.appendChild(s);
-      });
-    }
-    document.querySelectorAll('elevenlabs-convai').forEach(el => el.remove());
-    const widget = document.createElement('elevenlabs-convai');
-    widget.setAttribute('agent-id', p.elevenlabs_pron_agent);
-    document.body.appendChild(widget);
-
-    if (btn) {
-      btn.textContent = '🔴 סיים תרגול';
-      btn.onclick = () => {
-        document.querySelectorAll('elevenlabs-convai').forEach(el => el.remove());
-        navigate('lessons');
-      };
-    }
-    SFX.correct();
-  } catch(e) {
-    showToast('❌ שגיאה: ' + e.message);
-    if (btn) { btn.textContent = '🎙️ נסה שוב'; btn.onclick = startPronunciationBot; }
   }
 }
 
@@ -1899,13 +1737,12 @@ function render() {
     chat: renderChat,
     profile: renderProfile,
     review: renderReview,
-    pronunciation: renderPronunciationQuiz,
   };
   const fn = screens[state.screen];
   app.innerHTML = fn ? fn() : renderHome();
 
   // Nav highlight
-  const navMap = { home:'home', lessons:'lessons', series:'series', flash:'lessons', quiz:'lessons', chat:'chat', profile:'profile', review:'home', pronunciation:'lessons' };
+  const navMap = { home:'home', lessons:'lessons', series:'series', flash:'lessons', quiz:'lessons', chat:'chat', profile:'profile', review:'home' };
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   const activeNav = document.getElementById('nav-' + (navMap[state.screen] || state.screen));
   if (activeNav) activeNav.classList.add('active');

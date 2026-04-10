@@ -4,16 +4,34 @@
 **אחרי כל פעולה – חובה לעדכן את CLAUDE.md עם המיקום הנוכחי והשלב הבא.**
 כך תמיד ניתן להמשיך מהמקום הנכון גם אם עוצרים באמצע.
 
+## פורמט משימות באתרים חיצוניים
+כשנותנים משימה שדורשת פעולה באתר חיצוני, הפורמט הוא:
+1. **בעברית:** "פתח את: [לינק מלא לאתר]"
+2. **הוראה באנגלית** (תמיד באנגלית!) להעתקה לתוסף Claude בדפדפן – מפורטת, עצמאית, מבקשת מהמשתמש מידע חסר אם צריך
+3. המשתמש ישלח צילום מסך כאישור שהמשימה בוצעה
+4. לעדכן CLAUDE.md עם השלב הנוכחי
+
 ## קבצים בתיקייה
 - `index.html` – האפליקציה הראשית (HTML+CSS+JS + PWA meta tags + SW registration)
 - `words-data.js` – מאגר מילים (5,104 מילים, 4 רמות: A1/A2/B1/B2)
 - `manifest.json` – PWA manifest (שם, צבעים, אייקונים)
-- `sw.js` – Service Worker (cache-first, אופליין)
+- `sw.js` – Service Worker (cache-first, אופליין) – CACHE_NAME: alicecool-v3
+- `worker.js` – קוד Cloudflare Worker שמשמש כ-proxy ל-ElevenLabs TTS (מסתיר את ה-API Key)
 - `icons/icon-192.svg` – אייקון 192x192
 - `icons/icon-512.svg` – אייקון 512x512
 - `CLAUDE.md` – תיעוד פרויקט (הקובץ הזה)
 - `לוגו.png` – לוגו המותג
 - `צבעי המותג.pdf` – מסמך צבעי המותג
+
+## ארכיטקטורת TTS (2026-04-10)
+- **Worker URL:** https://alicecool-tts.moty-gotgilf.workers.dev/
+- **Cloudflare account:** Moty.gotgilf@gmail.com (Account ID: 57a94bff03640a5ec90f081d5732ec68)
+- **Secrets מוגדרים ב-Worker:**
+  - `ELEVENLABS_API_KEY` (secret_text) – ה-API Key הסודי של ElevenLabs
+  - `VOICE_ID` (secret_text) – Voice ID של הקול הטורקי
+- **זרימה:** האפליקציה → POST ל-Worker עם `{text}` → Worker קורא ל-ElevenLabs עם הסודות → מחזיר audio/mpeg
+- **יתרונות:** API Key לא חשוף ללקוחות, 100K קריאות/יום חינם, CORS מוגבל ל-psymall.github.io
+- **ללא צורך בהגדרות קול באפליקציה** – הכל פועל אוטומטית
 
 ## צבעי המותג
 - `#262261` – כחול כהה (ראשי)
@@ -96,28 +114,23 @@
 12. ✅ הגייה בקול (TTS) – כפתור 🔊 על כל מילה
 13. ✅ הסרת בוט שיחה ובוט הגייה – פישוט למסך הגדרות קול בלבד
 14. ✅ מסך הגדרות: רק API Key + Voice ID (בלי Agent IDs)
+15. ✅ שלב A: הגדרת Voice ID + API Key באפליקציה (2026-04-10)
+16. ✅ שלב B: Cloudflare Worker – **הושלם במלואו** (2026-04-10)
+    - חשבון Cloudflare נוצר (Moty.gotgilf@gmail.com)
+    - Worker נוצר ונפרס: alicecool-tts.moty-gotgilf.workers.dev
+    - Secrets: ELEVENLABS_API_KEY + VOICE_ID
+    - קוד TTS proxy עם CORS והגבלת אורך טקסט
+    - speakWord() עודכן לקרוא ל-Worker
+    - מסך הגדרות קול פושט (אין צורך ב-API Key מהלקוח)
+    - הוסר קוד ישן: showPrompt, startConversation, renderPronunciationQuiz, saveEL, clearEL
+    - sw.js cache version → v3
 
-### ⏳ עצרנו כאן (2026-04-09):
+### ⏳ עצרנו כאן (2026-04-10):
 
 ## שלבים הבאים (לפי סדר ביצוע)
 
-### שלב A: הגדרת Voice ID ב-ElevenLabs (טרם בוצע!)
-**סטטוס: לא הושלם – להתחיל מכאן בפעם הבאה**
-1. לך ל-ElevenLabs → Voices → בחר קול טורקי → העתק Voice ID
-2. פתח האפליקציה → ⚙️ הגדרות → הזן API Key + Voice ID → שמור
-3. בדוק שכפתור 🔊 בשיעורים משמיע מילה בטורקית
-
-### שלב B: Cloudflare Worker – הסתרת API Key
-**מטרה:** לקוחות לא יצטרכו להזין API Key. הכפתור 🔊 יעבוד מיד.
-- כרגע כל משתמש חייב להזין API Key בעצמו (לא מתאים ללקוחות)
-- Cloudflare Worker = proxy חינמי (100K קריאות/יום) שמסתיר את ה-Key
-- לקוח לוחץ 🔊 → Worker → ElevenLabs (ה-Key לא חשוף)
-- אפשר להוסיף rate limiting (הגבלת שימוש למשתמש)
-**מה צריך:**
-1. ליצור חשבון Cloudflare (חינם)
-2. ליצור Worker שמקבל מילה ושולח ל-ElevenLabs TTS API
-3. לשנות speakWord() באפליקציה לקרוא ל-Worker
-4. להסיר מסך הגדרות (לא צריך – הכל דרך Worker)
+### שלב C: Firebase Auth + Firestore – מערכת משתמשים
+**סטטוס: הבא בתור**
 
 ### שלב C: Firebase Auth + Firestore – מערכת משתמשים
 **מטרה:** כל לקוח נכנס עם חשבון, ההתקדמות נשמרת בענן.

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'alicecool-v2';
+const CACHE_NAME = 'alicecool-v3';
 const ASSETS = [
   './',
   './index.html',
