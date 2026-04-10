@@ -243,10 +243,35 @@
     - משחק drag-and-drop (click-to-place)
     - 4 עיטורים חדשים
     - נבדק end-to-end על האתר החי ✅
+19. ✅ **Node.js v24.14.1 + npm 11.0.0 הותקנו** (2026-04-10)
+    - מיקום: `C:\Program Files\nodejs\`
+    - **חשוב:** Claude Code היה פתוח בזמן ההתקנה → ה-Bash לא ראה את PATH החדש
+    - **הפתרון:** המשתמש ביקש לסגור ולפתוח מחדש את Claude Code
+    - בסשן הבא, `node --version` אמור לעבוד ישירות
+    - לפני הסגירה נבדק: `"/c/Program Files/nodejs/node.exe" --version` → v24.14.1 ✅
 
 ### ⏳ עצרנו כאן (2026-04-10 – סוף יום):
-הרכבת משפטים הושלמה ופרוסה. המשתמש יכול לבנות משפטים ב-4 רמות.
-הבא בתור: שלב C – Firebase Auth + Firestore (מערכת משתמשים עם שמירת התקדמות בענן).
+
+**המצב:**
+- הרכבת משפטים חיה באתר ופועלת מושלם
+- Node.js הותקן אבל Claude Code צריך restart כדי ש-PATH יתעדכן
+- המשתמש ביקש לתעד ואז לסגור ולפתוח מחדש את Claude Code
+
+**מה לעשות בשיחה הבאה (לפי סדר):**
+1. **לבדוק שNode.js עובד:** `node --version` + `npm --version` + `npx --version`
+   - אם עובד: ממשיכים
+   - אם לא עובד: להשתמש בנתיב מלא `"/c/Program Files/nodejs/node.exe"` או לבקש restart נוסף
+2. **להתחיל שרת פיתוח מקומי:** ליצור `.claude/launch.json` עם `npx serve` והפעלה דרך `preview_start`
+   - זה יפתור את בעיית הבדיקות בפריוויו (שהיתה היום עם המשפטים)
+   - מעכשיו, לפני כל push, בודקים מקומית
+3. **לעדכן CLAUDE.md** עם הערה שNode זמין ואיך להשתמש בו
+4. **להמשיך לשלב C: Firebase Auth + Firestore** (מערכת משתמשים)
+   - יצירת פרויקט Firebase
+   - Firebase Auth (Google + Email/Password)
+   - Firestore database
+   - מעבר מ-localStorage לסנכרון בענן
+
+**הערה חשובה:** בפריוויו הפנימי של Claude Code המשפטים "לא עבדו" (cache/timing). באתר החי הכל עובד. עם Node.js עכשיו יש לנו דרך טובה יותר לבדיקות מקומיות.
 
 ## שלבים הבאים (לפי סדר ביצוע)
 
@@ -273,10 +298,24 @@
 - מומלץ רק אחרי שיש בסיס משתמשים
 
 ## הערות טכניות
-- Node.js לא מותקן – לא להשתמש ב-npm/vite
+- **Node.js v24.14.1 מותקן** (2026-04-10) – `C:\Program Files\nodejs\`
+  - `node`, `npm`, `npx` זמינים (אחרי restart של Claude Code)
+  - אם PATH לא מעודכן – להשתמש בנתיב מלא: `"/c/Program Files/nodejs/node.exe"`
+  - שימושים עיקריים: שרת פיתוח מקומי (`npx serve`), לינטינג, Wrangler (Cloudflare), Firebase CLI
 - Python לא מותקן
 - כל שינוי הוא ישירות בקבצי HTML/JS
 - אחסון: GitHub Pages (בחירת המשתמש)
 - PWA: כבר בנוי, ניתן להתקנה בטלפון
 - קהל יעד: 10K עוקבים בטיקטוק (ישראלים)
 - Firebase: עובד מ-HTML/JS ישירות (לא צריך שרת)
+
+## כלים זמינים בסביבה (חשוב!)
+- ✅ **Bash** (Git Bash) – כל הפקודות רצות פה
+- ✅ **git** – commits, push, status
+- ✅ **curl** – קריאות HTTP, עבודה עם REST APIs (Cloudflare, Firebase)
+- ✅ **Node.js v24.14.1** + **npm 11.0.0** (מ-2026-04-10)
+- ✅ **PowerShell** (Windows מובנה) – ל-one-liners ב-Windows
+- ❌ Python – לא מותקן
+- ❌ Deno/Bun – לא מותקנים
+
+**כשמוסיפים כלי חדש:** לעדכן את הסקציה הזו ולציין "מותקן מ-[תאריך]"
