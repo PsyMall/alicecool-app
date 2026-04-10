@@ -4,6 +4,19 @@
 **אחרי כל פעולה – חובה לעדכן את CLAUDE.md עם המיקום הנוכחי והשלב הבא.**
 כך תמיד ניתן להמשיך מהמקום הנכון גם אם עוצרים באמצע.
 
+## ⏰ תזכורות תחזוקה שוטפות – חובה להזכיר למשתמש!
+**בתחילת כל שיחה חדשה (או כל 3-5 שיחות), להזכיר למשתמש באופן אקטיבי:**
+
+> 💡 "דרך אגב, כדאי לבדוק את השימוש ב-ElevenLabs וב-Cloudflare שלא חרגת מהתוכנית החינמית:
+> 1. **ElevenLabs:** https://elevenlabs.io/app/subscription – 10,000 תווים/חודש חינם
+> 2. **Cloudflare:** https://dash.cloudflare.com → Workers & Pages → alicecool-tts → Metrics – 100K בקשות/יום חינם"
+
+**מתי חיוני להזכיר:**
+- כשהמשתמש מדבר על פרסום/שיווק/שיתוף האתר
+- כשהמשתמש מזכיר שיש לו עוד משתמשים
+- בתחילת כל שיחה שחולפים יותר מ-7 ימים מהשיחה הקודמת
+- אם המשתמש מדווח שהכפתור 🔊 לא עובד (יכול להיות שחרגנו מהחבילה)
+
 ## פורמט משימות באתרים חיצוניים
 כשנותנים משימה שדורשת פעולה באתר חיצוני, הפורמט הוא:
 1. **בעברית:** "פתח את: [לינק מלא לאתר]"
@@ -28,10 +41,61 @@
 - **Cloudflare account:** Moty.gotgilf@gmail.com (Account ID: 57a94bff03640a5ec90f081d5732ec68)
 - **Secrets מוגדרים ב-Worker:**
   - `ELEVENLABS_API_KEY` (secret_text) – ה-API Key הסודי של ElevenLabs
-  - `VOICE_ID` (secret_text) – Voice ID של הקול הטורקי
+  - `VOICE_ID` (secret_text) – Voice ID של הקול הטורקי (uqq9c1CYgBRmZ0b4JJpV)
 - **זרימה:** האפליקציה → POST ל-Worker עם `{text}` → Worker קורא ל-ElevenLabs עם הסודות → מחזיר audio/mpeg
 - **יתרונות:** API Key לא חשוף ללקוחות, 100K קריאות/יום חינם, CORS מוגבל ל-psymall.github.io
+- **Cache:** אותה מילה לא נשלחת פעמיים (cache בזיכרון באפליקציה)
 - **ללא צורך בהגדרות קול באפליקציה** – הכל פועל אוטומטית
+- **API Token של Cloudflare נמחק** (2026-04-10) מטעמי אבטחה – ליצירת שינויים ב-Worker בעתיד יש ליצור Token חדש
+
+## 🔒 מה שאסור למחוק (יפיל את הכפתור 🔊 באתר)
+| פריט | מיקום | תוצאה במחיקה |
+|---|---|---|
+| **Worker "alicecool-tts"** | Cloudflare Dashboard | 🔊 מפסיק לעבוד |
+| **Secret ELEVENLABS_API_KEY** | בתוך ה-Worker | 🔊 מחזיר שגיאה |
+| **Secret VOICE_ID** | בתוך ה-Worker | 🔊 מחזיר שגיאה |
+| **API Key ב-ElevenLabs** | elevenlabs.io/app/settings | 🔊 מחזיר שגיאה |
+| **חשבון Cloudflare** | - | 🔊 מפסיק לעבוד |
+
+## 📊 גבולות חינמיים וניטור
+**תמיד לבדוק מעת לעת (ראה "תזכורות תחזוקה" למטה)**
+
+### ElevenLabs (הצוואר בקבוק העיקרי!)
+- **תוכנית חינמית: 10,000 תווים לחודש**
+- מילה טורקית ממוצעת = 5-7 תווים → בערך 1,500-2,000 השמעות/חודש
+- כל המשתמשים חולקים את אותו pool (מפתח יחיד ב-Worker)
+- **איפה לבדוק:** https://elevenlabs.io/app/subscription
+- תוכניות בתשלום:
+  - Starter: $5/חודש = 30,000 תווים
+  - Creator: $22/חודש = 100,000 תווים
+  - Pro: $99/חודש = 500,000 תווים
+
+### Cloudflare Workers
+- **תוכנית חינמית: 100,000 בקשות/יום**
+- כמעט בלתי אפשרי לחרוג (cache באפליקציה חוסך)
+- **איפה לבדוק:** Cloudflare Dashboard → alicecool-tts → Metrics
+- אחרי 100K/יום: $0.50 למיליון בקשות נוספות (זול)
+
+## ⏰ תזכורות תחזוקה – להדריך את המשתמש לבדוק מעת לעת
+**באופן אקטיבי:** כשהמשתמש פותח שיחה חדשה או כל כמה שיחות, להזכיר לו לבדוק:
+
+### בדיקה שבועית (לפחות פעם בשבוע)
+1. **ElevenLabs usage:** https://elevenlabs.io/app/subscription
+   - כמה תווים נוצלו החודש?
+   - אם מעל 70% מהחבילה → שקלו שדרוג
+2. **Cloudflare metrics:** Dashboard → alicecool-tts → Metrics
+   - כמה בקשות התקבלו?
+   - בדיקה לוודא שאין abuse
+
+### בדיקה חודשית
+- סקירת התפלגות משתמשים (אם יש Firebase בהמשך)
+- בדיקת שגיאות ב-Worker logs
+- עדכון cache ה-SW אם יש שינויים גדולים
+
+### מתי לשדרג את ElevenLabs?
+- **10-50 משתמשים פעילים:** תוכנית חינמית מספיקה
+- **50-500 משתמשים:** Starter ($5) או Creator ($22)
+- **500+ משתמשים:** Creator/Pro + לשקול rate limit ב-Worker
 
 ## צבעי המותג
 - `#262261` – כחול כהה (ראשי)
@@ -90,11 +154,20 @@
 - מילה של היום + הידעת? (טיפ יומי)
 - Loss aversion: מילים נחלשות אם לא חוזרים
 
-### ElevenLabs – הגדרות (localStorage)
-- `elevenlabs_key` – API Key
-- `elevenlabs_voice` – Voice ID (TTS למילים)
-- מסך הגדרות קול (⚙️) – פשוט: API Key + Voice ID בלבד
-- בוט שיחה ובוט הגייה הוסרו מהממשק (לא בשימוש כרגע)
+### הגייה בקול – ארכיטקטורה סופית (2026-04-10)
+- ❌ **אין יותר הגדרות קול באפליקציה** – הלקוח לא צריך להזין כלום
+- ✅ הכל דרך Cloudflare Worker (API Key מוסתר)
+- ✅ cache בזיכרון (אותה מילה לא נשלחת פעמיים)
+- ✅ Web Audio API לכפתור 🔊
+
+### מסך אודות (2026-04-10)
+- החליף את מסך "הגדרות קול" הישן
+- אייקון בתפריט: 💜 אודות (במקום ⚙️ הגדרות)
+- תוכן אישי על אליס (5 שנות ניסיון, אוניברסיטת אדנה, שפות שהיא דוברת)
+- כפתור "📱 שתף עכשיו" – Web Share API במובייל, מודאל fallback בדסקטופ
+- הודעת שיתוף מוכנה עם לינק לאתר
+- מזכיר Facebook/Instagram/TikTok כאפשרויות שיתוף
+- הישג `chatty` שודרג: לא קשור יותר ל-API Key; עכשיו נפתח אחרי 10 השמעות TTS
 
 ## שלב נוכחי – 2026-04-09
 **האתר חי!** https://psymall.github.io/alicecool-app/
@@ -117,20 +190,24 @@
 15. ✅ שלב A: הגדרת Voice ID + API Key באפליקציה (2026-04-10)
 16. ✅ שלב B: Cloudflare Worker – **הושלם במלואו** (2026-04-10)
     - חשבון Cloudflare נוצר (Moty.gotgilf@gmail.com)
+    - API Token נוצר (תבנית Edit Cloudflare Workers) – שימש להתקנה דרך REST API
     - Worker נוצר ונפרס: alicecool-tts.moty-gotgilf.workers.dev
-    - Secrets: ELEVENLABS_API_KEY + VOICE_ID
-    - קוד TTS proxy עם CORS והגבלת אורך טקסט
-    - speakWord() עודכן לקרוא ל-Worker
-    - מסך הגדרות קול פושט (אין צורך ב-API Key מהלקוח)
-    - הוסר קוד ישן: showPrompt, startConversation, renderPronunciationQuiz, saveEL, clearEL
+    - Secrets נוספו דרך REST API: ELEVENLABS_API_KEY + VOICE_ID
+    - קוד TTS proxy (worker.js) עם CORS מוגבל, הגבלת אורך 200 תווים, health check GET
+    - נבדק end-to-end: החזיר 15KB MP3 למילה "merhaba" ✅
+    - speakWord() עודכן לקרוא ל-Worker במקום ישירות ל-ElevenLabs
+    - מסך "הגדרות קול" הוחלף ב"אודות" (איקון: 💜)
+    - הוסר קוד ישן: showPrompt, showPronunciationPrompt, startConversation, renderPronunciationQuiz, startPronunciationQuiz, startPronunciationBot, saveEL, clearEL
     - sw.js cache version → v3
+    - הושלם מסך אודות אישי + כפתור שיתוף חכם (Web Share API + modal fallback)
+    - API Token של Cloudflare **נמחק** בסוף השלב (אבטחה) – רק ה-Worker ממשיך לעבוד עצמאית
+17. ✅ Commit + Push ל-GitHub (81a61a1) – האתר החי מעודכן
 
-### ⏳ עצרנו כאן (2026-04-10):
+### ⏳ עצרנו כאן (2026-04-10 – סוף יום):
+שלב B הושלם במלואו. הכפתור 🔊 עובד דרך Cloudflare Worker ללא צורך בהגדרות לקוח.
+מסך האודות חדש עם כפתור שיתוף. האתר פרוס וחי.
 
 ## שלבים הבאים (לפי סדר ביצוע)
-
-### שלב C: Firebase Auth + Firestore – מערכת משתמשים
-**סטטוס: הבא בתור**
 
 ### שלב C: Firebase Auth + Firestore – מערכת משתמשים
 **מטרה:** כל לקוח נכנס עם חשבון, ההתקדמות נשמרת בענן.
