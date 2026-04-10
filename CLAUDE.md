@@ -259,10 +259,51 @@
 21. ✅ **השמעה אוטומטית למשפטים** (2026-04-10)
     - `checkSentence()` קורא ל-`speakWord(sentence.tr)` עם setTimeout 400ms כשהמשפט נכון
     - נבדק מקומית end-to-end דרך preview_eval – הצלחה מלאה ✅
+    - Commit `94ed8c7` – נדחף לאתר החי
+22. ✅ **תיקון 11 משפטים לא-טבעיים במאגר** (2026-04-10) – Commit `539ba05`
+    - סקירה מלאה של כל 120 המשפטים בעזרת ידע דקדוקי טורקי
+    - **A1:** 5 תיקונים
+      - `Bu ne kadar para?` → `Bu ne kadar?` ("para" מיותר)
+      - `Türkçe çok iyi bilmiyorum` → `Türkçeyi iyi bilmiyorum` (חסר אקוזטיב)
+      - `Babam bir doktor` → `Babam doktor` (אין "bir" לפני מקצוע)
+      - `Bugün pazartesi günü` → `Bugün pazartesi` ("günü" מיותר)
+      - `Hava çok soğuk bugün` → `Bugün hava çok soğuk` (זמן קודם)
+    - **A2:** 3 תיקונים
+      - `Geçen hafta hasta oldum` → `Geçen hafta hastaydım` (היה, לא נהיה)
+      - `Ben senin adını unuttum` → `Senin adını unuttum` ("Ben" מיותר)
+      - `Dün arkadaşlarımla yedim` → `Dün arkadaşlarımla yemek yedim`
+    - **B1:** 1 תיקון
+      - `ara beni` → `beni ara` (מושא לפני פועל)
+    - **B2:** 2 תיקונים
+      - `Neyi kastettiğini` → `Ne demek istediğini` (אידיומטי)
+      - `gurur duyurdu` → `Başarın beni çok gururlandırdı` (הסיבתי הנכון)
+    - אומת: 120 משפטים תקינים, 0 אי-התאמות בין `tr` ל-`words[]`, max length 48
+    - נבדק מקומית דרך preview_eval + נדחף לאתר החי ✅
 
-### שלב נוכחי – ממתין להמשך:
-האתר פועל, משפטים משמיעים אוטומטית, Node + preview server מוכנים.
-**הבא בתור:** שלב C – Firebase Auth + Firestore (מערכת משתמשים).
+### ⏳ עצרנו כאן (2026-04-10):
+
+**המצב:**
+- האתר חי ומעודכן עם כל השיפורים – https://psymall.github.io/alicecool-app/
+- השמעה אוטומטית של משפטים עובדת מושלם
+- כל 120 המשפטים נבדקו ותוקנו – נשמעים טבעיים בטורקית
+- Preview server מקומי זמין (`.claude/launch.json`)
+- Node + npm + npx זמינים ישירות ב-Bash
+- כל הקומיטים נדחפו ל-GitHub
+
+**מה לעשות בשיחה הבאה (לפי סדר):**
+1. **תזכורת אוטומטית:** לבדוק usage של ElevenLabs + Cloudflare (ראה "תזכורות תחזוקה" למעלה)
+2. **להמשיך לשלב C: Firebase Auth + Firestore** (מערכת משתמשים)
+   - יצירת פרויקט Firebase (חינם)
+   - הפעלת Authentication (Google + Email/Password)
+   - יצירת Firestore database
+   - הוספת מסך login/register לאפליקציה
+   - החלפת getProgress()/saveProgress() מ-localStorage ל-Firestore
+   - סנכרון: localStorage כ-fallback אופליין, Firestore כ-primary
+3. **אפשרויות נוספות אם רוצים לדחות את Firebase:**
+   - הרחבת מאגר המשפטים (עוד רמות / עוד נושאים)
+   - שיפורי UI/UX נוספים
+   - הוספת כפתור 🔊 ידני על כל משפט (בנוסף להשמעה האוטומטית)
+   - מסך סטטיסטיקות אישי
 
 ## שלבים הבאים (לפי סדר ביצוע)
 
