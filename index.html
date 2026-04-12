@@ -387,6 +387,21 @@ const SFX = (() => {
       });
     })},
 
+    spin() { play(c => {
+      // Accelerating tick-tick sound for 3.5 seconds
+      for (let i = 0; i < 30; i++) {
+        const t = c.currentTime + i * (0.05 + i * 0.004);
+        if (t > c.currentTime + 3.5) break;
+        const o = c.createOscillator(), g = c.createGain();
+        o.connect(g); g.connect(c.destination);
+        o.type = 'sine';
+        o.frequency.setValueAtTime(800 + Math.random() * 400, t);
+        g.gain.setValueAtTime(0.06, t);
+        g.gain.exponentialRampToValueAtTime(0.01, t + 0.04);
+        o.start(t); o.stop(t + 0.05);
+      }
+    })},
+
     streak() { play(c => {
       [262, 330, 392, 523].forEach((f, i) => {
         const o = c.createOscillator(), g = c.createGain();
@@ -680,7 +695,7 @@ function addXP(n) {
   const actual = n * multiplier;
   p.xp = oldXP + actual;
   localStorage.setItem('alicecool_progress', JSON.stringify(p));
-  if (multiplier > 1) showToast(`⚡ XP כפול! +${actual} XP`);
+  if (multiplier > 1) showToast(`⚡ כפול! +${actual} ⭐`);
   // Check level up
   const levels = LEVEL_TITLES.map(l => l.min);
   const oldLevel = levels.filter(l => oldXP >= l).length;
@@ -689,7 +704,7 @@ function addXP(n) {
     const info = getLevelInfo(p.xp);
     setTimeout(() => {
       SFX.levelUp();
-      showCelebration(info.current.icon, 'עלית רמה!', `${info.current.label} – ${p.xp} XP`, '');
+      showCelebration(info.current.icon, 'עלית רמה!', `${info.current.label} – ${p.xp} ⭐`, '');
     }, 500);
   }
   return actual;
@@ -733,19 +748,19 @@ function claimDailyBonus() {
   localStorage.setItem('alicecool_progress', JSON.stringify(p));
   addXP(xpReward);
   SFX.streak();
-  showCelebration('🎁', `בונוס יום ${day}!`, `+${xpReward} XP${day === 7 ? ' 🎉 בונוס שבועי!' : ''}`, 'render()');
+  showCelebration('🎁', `בונוס יום ${day}!`, `+${xpReward} ⭐ כוכבים${day === 7 ? ' 🎉 בונוס שבועי!' : ''}`, 'render()');
 }
 
 // ─── SPIN WHEEL ───
 const WHEEL_PRIZES = [
-  { label: '10 XP', type: 'xp', value: 10, color: '#403C74', chance: 25 },
-  { label: '25 XP', type: 'xp', value: 25, color: '#262261', chance: 20 },
-  { label: '50 XP', type: 'xp', value: 50, color: '#AE1B28', chance: 15 },
-  { label: '100 XP', type: 'xp', value: 100, color: '#c72030', chance: 5 },
-  { label: 'Freeze 🧊', type: 'freeze', value: 1, color: '#0891b2', chance: 10 },
-  { label: 'XP כפול', type: 'doubleXP', value: 1, color: '#7c3aed', chance: 8 },
-  { label: 'רמז 💡', type: 'hint', value: 1, color: '#ea580c', chance: 12 },
-  { label: 'בונוס!', type: 'xp', value: 35, color: '#15803d', chance: 5 },
+  { label: '10 ⭐', type: 'xp', value: 10, color: '#403C74', chance: 25 },
+  { label: '25 ⭐', type: 'xp', value: 25, color: '#262261', chance: 20 },
+  { label: '50 ⭐', type: 'xp', value: 50, color: '#AE1B28', chance: 15 },
+  { label: '100 ⭐', type: 'xp', value: 100, color: '#c72030', chance: 5 },
+  { label: '🧊 הגנה', type: 'freeze', value: 1, color: '#0891b2', chance: 10 },
+  { label: '⭐ כפול', type: 'doubleXP', value: 1, color: '#7c3aed', chance: 8 },
+  { label: '💡 רמז', type: 'hint', value: 1, color: '#ea580c', chance: 12 },
+  { label: '35 ⭐', type: 'xp', value: 35, color: '#15803d', chance: 5 },
 ];
 function canSpin() {
   const p = getProgress();
@@ -783,7 +798,7 @@ function spinWheel() {
   wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
   wheel.style.transform = `rotate(${totalSpin}deg)`;
 
-  SFX.click();
+  SFX.spin();
 
   setTimeout(() => {
     const prize = WHEEL_PRIZES[prizeIdx];
@@ -795,7 +810,7 @@ function applyPrize(prize) {
   const p = getProgress();
   if (prize.type === 'xp') {
     addXP(prize.value);
-    showCelebration('🎉', `זכית ב-${prize.value} XP!`, 'מזל טוב!', '');
+    showCelebration('🎉', `זכית ב-${prize.value} ⭐!`, 'מזל טוב!', '');
   } else if (prize.type === 'freeze') {
     p.streakFreeze = true;
     localStorage.setItem('alicecool_progress', JSON.stringify(p));
@@ -803,11 +818,11 @@ function applyPrize(prize) {
   } else if (prize.type === 'doubleXP') {
     p.doubleXPUntil = Date.now() + 86400000;
     localStorage.setItem('alicecool_progress', JSON.stringify(p));
-    showCelebration('⚡', 'XP כפול ליום!', 'כל פעולה = כפול XP ל-24 שעות', '');
+    showCelebration('⚡', 'כוכבים כפולים ליום!', 'כל פעולה = כפול ⭐ ל-24 שעות', '');
   } else if (prize.type === 'hint') {
     p.hints = (p.hints || 0) + 1;
     localStorage.setItem('alicecool_progress', JSON.stringify(p));
-    showCelebration('💡', 'זכית ברמז!', `יש לך ${p.hints} רמזים`, '');
+    showCelebration('💡', 'זכית ברמז!', `יש לך ${p.hints} רמזים לשימוש במבחנים`, '');
   }
   SFX.fanfare();
   showConfetti(30);
@@ -878,7 +893,7 @@ function addDailyWord(count = 1) {
     p.dailyGoalMet = true;
     localStorage.setItem('alicecool_progress', JSON.stringify(p));
     setTimeout(() => {
-      showCelebration('🎯', 'יעד יומי הושלם!', 'למדת 10 מילים היום! +50 XP בונוס', '');
+      showCelebration('🎯', 'יעד יומי הושלם!', 'למדת 10 מילים היום! +50 ⭐ בונוס', '');
       addXP(50);
     }, 600);
   } else {
@@ -951,9 +966,9 @@ const ALL_ACHIEVEMENTS = [
   { id:'streak_3', icon:'🔥', name:'3 ימים ברצף', desc:'רצף של 3 ימים', check: p => (p.streak||0) >= 3 },
   { id:'streak_7', icon:'💪', name:'שבוע שלם!', desc:'רצף של 7 ימים', check: p => (p.streak||0) >= 7 },
   { id:'streak_30', icon:'⚡', name:'חודש מטורף', desc:'רצף של 30 ימים!', check: p => (p.streak||0) >= 30 },
-  { id:'xp_100', icon:'⭐', name:'100 XP', desc:'צברת 100 נקודות', check: p => (p.xp||0) >= 100 },
-  { id:'xp_500', icon:'🌟', name:'500 XP', desc:'צברת 500 נקודות', check: p => (p.xp||0) >= 500 },
-  { id:'xp_1000', icon:'💎', name:'1000 XP', desc:'צברת 1000 נקודות!', check: p => (p.xp||0) >= 1000 },
+  { id:'xp_100', icon:'⭐', name:'100 כוכבים', desc:'צברת 100 כוכבים', check: p => (p.xp||0) >= 100 },
+  { id:'xp_500', icon:'🌟', name:'500 כוכבים', desc:'צברת 500 כוכבים', check: p => (p.xp||0) >= 500 },
+  { id:'xp_1000', icon:'💎', name:'1000 כוכבים', desc:'צברת 1000 כוכבים!', check: p => (p.xp||0) >= 1000 },
   { id:'perfect_quiz', icon:'🏆', name:'מושלם!', desc:'100% במבחן', check: p => p.perfectQuiz },
   { id:'five_cats', icon:'📚', name:'5 קטגוריות', desc:'סיימת 5 קטגוריות', check: p => Object.keys(p).filter(k => k.startsWith('done_') && p[k]).length >= 5 },
   { id:'ten_cats', icon:'🎓', name:'10 קטגוריות', desc:'סיימת 10 קטגוריות', check: p => Object.keys(p).filter(k => k.startsWith('done_') && p[k]).length >= 10 },
@@ -1197,7 +1212,7 @@ function renderHome() {
       <div class="card card-hover" style="cursor:pointer;text-align:center;padding:20px 12px" onclick="navigate('profile')">
         <div style="font-size:32px;margin-bottom:6px">📊</div>
         <div style="font-weight:700;color:var(--purple);font-size:14px">התקדמות</div>
-        <div style="font-size:12px;color:var(--muted)">${xp} XP</div>
+        <div style="font-size:12px;color:var(--muted)">${xp} ⭐</div>
       </div>
     </div>
 
@@ -1252,14 +1267,14 @@ function renderHome() {
           <div class="lb-row ${f.isMe ? 'lb-me' : ''}">
             <div class="lb-rank">${medals[i]}</div>
             <div class="lb-name">${f.isMe ? '⭐ ' + f.name : f.name}</div>
-            <div class="lb-xp">${f.xp} XP</div>
+            <div class="lb-xp">${f.xp} ⭐</div>
           </div>`).join('');
         if (myIdx > 2) {
           html += `<div style="text-align:center;color:var(--muted);font-size:18px;padding:4px 0">···</div>`;
           html += `<div class="lb-row lb-me">
             <div class="lb-rank" style="color:var(--red);font-weight:900">${myEntry.rank}</div>
             <div class="lb-name">⭐ ${myEntry.name}</div>
-            <div class="lb-xp">${myEntry.xp} XP</div>
+            <div class="lb-xp">${myEntry.xp} ⭐</div>
           </div>`;
         }
         return html;
@@ -1272,11 +1287,11 @@ function renderHome() {
       return `<div class="card" style="display:flex;align-items:center;gap:14px;padding:14px 16px">
         <div style="font-size:32px">${info.current.icon}</div>
         <div style="flex:1">
-          <div style="font-size:14px;font-weight:800;color:var(--navy)">${info.current.label} – ${xp} XP</div>
+          <div style="font-size:14px;font-weight:800;color:var(--navy)">${info.current.label} – ${xp} ⭐</div>
           <div class="progress-bar" style="margin-top:6px">
             <div class="progress-fill" style="width:${info.pct}%"></div>
           </div>
-          <div style="font-size:11px;color:var(--muted);margin-top:4px">עוד ${info.next.min - xp} XP ל${info.next.icon} ${info.next.label}</div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">עוד ${info.next.min - xp} ⭐ ל${info.next.icon} ${info.next.label}</div>
         </div>
       </div>`;
     })()}
@@ -1519,7 +1534,62 @@ function renderQuiz() {
         </button>`).join('')}
     </div>
     <div id="quiz-feedback" style="margin-top:14px;min-height:24px;text-align:center;font-weight:700;font-size:16px"></div>
+
+    <!-- POWER-UPS -->
+    <div style="display:flex;gap:10px;margin-top:14px;justify-content:center">
+      ${(getProgress().xp || 0) >= 15 ? `<button class="btn btn-outline" style="padding:8px 14px;font-size:13px" id="hint-btn" onclick="useHint()">💡 רמז (15 ⭐)</button>` : ''}
+      ${(getProgress().xp || 0) >= 25 ? `<button class="btn btn-outline" style="padding:8px 14px;font-size:13px;border-color:var(--red);color:var(--red)" id="lifesaver-btn" onclick="useLifesaver()">🛟 הצלה (25 ⭐)</button>` : ''}
+    </div>
   </div>`;
+}
+
+// ─── QUIZ POWER-UPS ───
+function useHint() {
+  const p = getProgress();
+  if ((p.xp || 0) < 15 || state.quizAnswered) return;
+  p.xp -= 15;
+  localStorage.setItem('alicecool_progress', JSON.stringify(p));
+
+  const cat = state.flashSource === 'series' ? SERIES[state.flashCategory] : WORDS[state.flashCategory];
+  const correct = cat.words[state.quizIdx];
+  // Remove 2 wrong answers
+  const options = document.querySelectorAll('.quiz-option');
+  let removed = 0;
+  options.forEach(btn => {
+    if (btn.textContent.trim() !== correct.he && removed < 2) {
+      btn.style.opacity = '0.2';
+      btn.disabled = true;
+      removed++;
+    }
+  });
+  // Hide hint buttons
+  const hintBtn = document.getElementById('hint-btn');
+  const lifeBtn = document.getElementById('lifesaver-btn');
+  if (hintBtn) hintBtn.remove();
+  if (lifeBtn) lifeBtn.remove();
+  showToast('💡 רמז! נשארו 2 אפשרויות');
+  SFX.click();
+}
+
+function useLifesaver() {
+  const p = getProgress();
+  if ((p.xp || 0) < 25 || state.quizAnswered) return;
+  p.xp -= 25;
+  localStorage.setItem('alicecool_progress', JSON.stringify(p));
+
+  const cat = state.flashSource === 'series' ? SERIES[state.flashCategory] : WORDS[state.flashCategory];
+  const correct = cat.words[state.quizIdx];
+  // Show correct answer and skip
+  const options = document.querySelectorAll('.quiz-option');
+  options.forEach(btn => {
+    btn.disabled = true;
+    if (btn.textContent.trim() === correct.he) btn.classList.add('correct');
+  });
+  state.quizAnswered = true;
+  showToast('🛟 גלגל הצלה! התשובה נחשפה');
+  SFX.correct();
+  addDailyWord(1);
+  setTimeout(() => { state.quizIdx++; state.quizAnswered = false; render(); }, 1800);
 }
 
 function answerQuiz(idx, isCorrect, elId) {
@@ -1550,10 +1620,10 @@ function answerQuiz(idx, isCorrect, elId) {
     if (state.quizCorrectStreak === 3) {
       showToast('🔥 3 ברצף! כל הכבוד!');
     } else if (state.quizCorrectStreak === 5) {
-      showToast('⚡ 5 ברצף! XP כפול!');
+      showToast('⚡ 5 ברצף! כוכבים כפולים!');
       showConfetti(15);
     } else if (state.quizCorrectStreak === 10) {
-      showToast('💥 10 ברצף! XP משולש!!');
+      showToast('💥 10 ברצף! כוכבים משולשים!!');
       showConfetti(30);
     }
   } else {
@@ -1950,7 +2020,7 @@ function renderSentences() {
       <div style="font-size:13px;color:#d4d0ff;line-height:1.6">
         מוצג משפט בעברית.<br>
         לחצו על המילים בטורקית לפי הסדר הנכון.<br>
-        10 XP לכל משפט נכון ✨
+        10 ⭐ לכל משפט נכון ✨
       </div>
     </div>
 
@@ -2070,11 +2140,30 @@ function renderSentQuiz() {
         ${state.sentCorrect ? '✨ המשפט הבא' : 'המשך'}
       </button>
     ` : `
+      <div style="display:flex;gap:10px;margin-bottom:10px;justify-content:center">
+        ${(getProgress().xp || 0) >= 15 && state.sentPlaced.length < sentence.words.length ? `<button class="btn btn-outline" style="padding:8px 14px;font-size:13px" onclick="useSentHint()">💡 רמז (15 ⭐)</button>` : ''}
+      </div>
       <button class="btn btn-primary" onclick="checkSentence()" style="width:100%;font-size:16px;padding:16px" ${state.sentPlaced.length === 0 ? 'disabled' : ''}>
         ✓ בדוק
       </button>
     `}
   </div>`;
+}
+
+function useSentHint() {
+  const p = getProgress();
+  if ((p.xp || 0) < 15 || state.sentChecked) return;
+  p.xp -= 15;
+  localStorage.setItem('alicecool_progress', JSON.stringify(p));
+  // Find the next correct word that hasn't been placed yet
+  const sentence = SENTENCES[state.sentLvl][state.sentIdx];
+  const nextPos = state.sentPlaced.length;
+  if (nextPos < sentence.words.length) {
+    state.sentPlaced.push(nextPos);
+    SFX.correct();
+    showToast('💡 רמז! מילה הושמה');
+    render();
+  }
 }
 
 function placeSentTile(idx) {
@@ -2108,7 +2197,7 @@ function checkSentence() {
     p.sentencesCompleted = (p.sentencesCompleted || 0) + 1;
     localStorage.setItem('alicecool_progress', JSON.stringify(p));
     checkAchievements();
-    showToast('🎉 נכון! +10 XP');
+    showToast('🎉 נכון! +10 ⭐');
     showConfetti();
     // Auto-play the Turkish sentence pronunciation via ElevenLabs
     setTimeout(() => speakWord(sentence.tr), 400);
@@ -2158,7 +2247,7 @@ function renderProfile() {
     <div class="card" style="background:linear-gradient(135deg,var(--navy),var(--purple));color:#fff;text-align:center;padding:28px">
       <div style="font-size:52px;margin-bottom:8px">${currentLevel.icon}</div>
       <div style="font-size:22px;font-weight:900">${currentLevel.label}</div>
-      <div style="font-size:14px;color:#9090c0;margin-top:4px">${xp} נקודות XP</div>
+      <div style="font-size:14px;color:#9090c0;margin-top:4px">${xp} ⭐ כוכבים</div>
       <div style="margin-top:16px">
         <div style="display:flex;justify-content:space-between;font-size:12px;color:#9090c0;margin-bottom:6px">
           <span>${currentLevel.icon} ${currentLevel.label}</span><span>${nextLevel.icon} ${nextLevel.label}</span>
@@ -2166,7 +2255,7 @@ function renderProfile() {
         <div class="progress-bar" style="background:rgba(255,255,255,0.15)">
           <div class="progress-fill" style="width:${pctToNext}%;background:linear-gradient(90deg,var(--red),#f59e0b)"></div>
         </div>
-        <div style="font-size:11px;color:#9090c0;margin-top:4px">עוד ${nextLevel.min - xp} XP לרמה הבאה</div>
+        <div style="font-size:11px;color:#9090c0;margin-top:4px">עוד ${nextLevel.min - xp} ⭐ לרמה הבאה</div>
       </div>
     </div>
 
@@ -2195,7 +2284,7 @@ function renderProfile() {
       </div>
       ${p.streakFreeze ?
         `<span class="badge" style="background:#e8f5e9;color:#15803d">פעיל</span>` :
-        `<button class="btn btn-outline" style="padding:8px 16px;font-size:13px" onclick="activateFreeze()">הפעל (50 XP)</button>`
+        `<button class="btn btn-outline" style="padding:8px 16px;font-size:13px" onclick="activateFreeze()">הפעל (50 ⭐)</button>`
       }
     </div>
 
@@ -2236,28 +2325,28 @@ function renderLeaderboard() {
         <div class="lb-row ${f.isMe ? 'lb-me' : ''}">
           <div class="lb-rank">${i < 3 ? medals[i] : f.rank}</div>
           <div class="lb-name">${f.isMe ? '⭐ ' + f.name : f.name}</div>
-          <div class="lb-xp">${f.xp} XP</div>
+          <div class="lb-xp">${f.xp} ⭐</div>
         </div>`).join('')}
       ${myIdx >= 20 ? `
         <div style="text-align:center;color:var(--muted);font-size:18px;padding:6px 0">···</div>
         <div class="lb-row lb-me">
           <div class="lb-rank" style="color:var(--red);font-weight:900">${lb[myIdx].rank}</div>
           <div class="lb-name">⭐ ${lb[myIdx].name}</div>
-          <div class="lb-xp">${lb[myIdx].xp} XP</div>
+          <div class="lb-xp">${lb[myIdx].xp} ⭐</div>
         </div>` : ''}
     </div>
     <div style="text-align:center;font-size:12px;color:var(--muted)">
       ${lb.length} לומדים השבוע · מתאפס כל שבוע
     </div>
     ${isDoubleXP() ? `<div class="card" style="background:#f5f3ff;border:2px solid #7c3aed;text-align:center;padding:12px">
-      <span style="font-size:14px;font-weight:700;color:#7c3aed">⚡ XP כפול פעיל!</span>
+      <span style="font-size:14px;font-weight:700;color:#7c3aed">⚡ כוכבים כפולים פעיל!</span>
     </div>` : ''}
   </div>`;
 }
 
 function activateFreeze() {
   const p = getProgress();
-  if ((p.xp || 0) < 50) { showToast('❌ צריך לפחות 50 XP'); return; }
+  if ((p.xp || 0) < 50) { showToast('❌ צריך לפחות 50 ⭐'); return; }
   p.xp -= 50;
   p.streakFreeze = true;
   localStorage.setItem('alicecool_progress', JSON.stringify(p));
