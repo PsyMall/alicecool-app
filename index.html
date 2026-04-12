@@ -2303,6 +2303,16 @@ function renderProfile() {
       </div>
     </div>
 
+    <!-- DEV TOOLS -->
+    <div class="card" style="border:2px dashed var(--muted);padding:12px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">🔧 כלי מפתח</div>
+      <div style="display:flex;flex-wrap:wrap;gap:8px">
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;border:1px solid var(--border)" onclick="let p=getProgress();delete p.lastSpinDate;localStorage.setItem('alicecool_progress',JSON.stringify(p));render();showToast('🎰 גלגל אופס!')">אפס גלגל</button>
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;border:1px solid var(--border)" onclick="let p=getProgress();delete p.dailyBonusDate;localStorage.setItem('alicecool_progress',JSON.stringify(p));render();showToast('🎁 בונוס אופס!')">אפס בונוס</button>
+        <button class="btn btn-ghost" style="font-size:12px;padding:6px 12px;border:1px solid var(--border)" onclick="addXP(100);render();showToast('+100 ⭐')">+100 ⭐</button>
+      </div>
+    </div>
+
     <!-- RESET -->
     <button class="btn btn-ghost" onclick="if(confirm('לאפס את כל ההתקדמות?')){localStorage.removeItem('alicecool_progress');location.reload()}" style="width:100%;color:var(--muted)">
       אפס התקדמות
