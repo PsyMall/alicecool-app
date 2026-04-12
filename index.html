@@ -219,7 +219,27 @@
     .mute-btn:active { transform: scale(0.9); }
 
     /* ── SPIN WHEEL ── */
-    @keyframes spinWheel { from { transform: rotate(0); } to { transform: rotate(1080deg); } }
+    @keyframes spinWheel { to { transform: var(--spin-to); } }
+    .wheel-container { position: relative; display: inline-block; }
+    .wheel-canvas { border-radius: 50%; box-shadow: 0 4px 24px rgba(38,34,97,0.2); }
+    .wheel-pointer { position: absolute; top: -12px; left: 50%; transform: translateX(-50%); font-size: 28px; z-index: 2; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3)); }
+    .wheel-spin-btn {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%);
+      width: 56px; height: 56px; border-radius: 50%; border: 3px solid #fff;
+      background: var(--red); color: #fff; font-weight: 900; font-size: 14px;
+      cursor: pointer; box-shadow: 0 4px 12px rgba(174,27,40,0.4);
+      font-family: 'Heebo', sans-serif; transition: all 0.2s;
+    }
+    .wheel-spin-btn:hover { background: #c72030; transform: translate(-50%,-50%) scale(1.05); }
+    .wheel-spin-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    /* ── LEADERBOARD ── */
+    .lb-row { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-radius: 12px; transition: background 0.2s; }
+    .lb-row:nth-child(odd) { background: #f8f7fc; }
+    .lb-row.lb-me { background: linear-gradient(90deg, #f0effa, #e8e8f4); border: 2px solid var(--purple); }
+    .lb-rank { width: 28px; text-align: center; font-weight: 800; color: var(--muted); font-size: 14px; }
+    .lb-name { flex: 1; font-weight: 600; font-size: 14px; color: var(--text); }
+    .lb-xp { font-weight: 800; font-size: 14px; color: var(--navy); }
 
     /* ── LOCKED CATEGORY ── */
     .category-locked { opacity:0.5; filter:grayscale(0.4); cursor:not-allowed !important; }
@@ -654,19 +674,187 @@ function saveProgress(key, val) {
 function addXP(n) {
   const p = getProgress();
   const oldXP = p.xp || 0;
-  p.xp = oldXP + n;
+  // Double XP active?
+  let multiplier = 1;
+  if (p.doubleXPUntil && Date.now() < p.doubleXPUntil) multiplier = 2;
+  const actual = n * multiplier;
+  p.xp = oldXP + actual;
   localStorage.setItem('alicecool_progress', JSON.stringify(p));
+  if (multiplier > 1) showToast(`⚡ XP כפול! +${actual} XP`);
   // Check level up
-  const levels = [0,100,300,600,1000,1500,2500,4000];
+  const levels = LEVEL_TITLES.map(l => l.min);
   const oldLevel = levels.filter(l => oldXP >= l).length;
   const newLevel = levels.filter(l => p.xp >= l).length;
   if (newLevel > oldLevel) {
+    const info = getLevelInfo(p.xp);
     setTimeout(() => {
       SFX.levelUp();
-      showCelebration('🎉', 'עלית רמה!', `הגעת ל-${p.xp} XP`, '');
+      showCelebration(info.current.icon, 'עלית רמה!', `${info.current.label} – ${p.xp} XP`, '');
     }, 500);
   }
-  return n;
+  return actual;
+}
+
+// ─── LEVEL TITLES ───
+const LEVEL_TITLES = [
+  { min:0, label:'מתחיל', icon:'🌱' },
+  { min:100, label:'לומד', icon:'📖' },
+  { min:300, label:'חכם', icon:'🧠' },
+  { min:600, label:'מתקדם', icon:'⚡' },
+  { min:1000, label:'מומחה', icon:'🎯' },
+  { min:1500, label:'אלוף', icon:'👑' },
+  { min:2500, label:'אגדה', icon:'🏆' },
+  { min:4000, label:'סולטאן', icon:'💎' },
+];
+function getLevelInfo(xp) {
+  const current = [...LEVEL_TITLES].reverse().find(l => xp >= l.min) || LEVEL_TITLES[0];
+  const next = LEVEL_TITLES.find(l => l.min > xp) || LEVEL_TITLES[LEVEL_TITLES.length - 1];
+  const pct = current === next ? 100 : Math.min(100, Math.round(((xp - current.min) / (next.min - current.min)) * 100));
+  return { current, next, pct };
+}
+
+// ─── DAILY LOGIN BONUS (escalating) ───
+function getDailyBonus() {
+  const p = getProgress();
+  const today = new Date().toDateString();
+  if (p.dailyBonusDate === today) return { claimed: true, day: p.dailyBonusDay || 1 };
+  return { claimed: false, day: p.dailyBonusDay || 0 };
+}
+function claimDailyBonus() {
+  const p = getProgress();
+  const today = new Date().toDateString();
+  if (p.dailyBonusDate === today) return;
+  const yesterday = new Date(Date.now() - 86400000).toDateString();
+  let day = (p.dailyBonusDate === yesterday) ? ((p.dailyBonusDay || 0) % 7) + 1 : 1;
+  const rewards = [10, 15, 20, 25, 30, 50, 100];
+  const xpReward = rewards[day - 1];
+  p.dailyBonusDay = day;
+  p.dailyBonusDate = today;
+  localStorage.setItem('alicecool_progress', JSON.stringify(p));
+  addXP(xpReward);
+  SFX.streak();
+  showCelebration('🎁', `בונוס יום ${day}!`, `+${xpReward} XP${day === 7 ? ' 🎉 בונוס שבועי!' : ''}`, 'render()');
+}
+
+// ─── SPIN WHEEL ───
+const WHEEL_PRIZES = [
+  { label: '10 XP', type: 'xp', value: 10, color: '#403C74', chance: 25 },
+  { label: '25 XP', type: 'xp', value: 25, color: '#262261', chance: 20 },
+  { label: '50 XP', type: 'xp', value: 50, color: '#AE1B28', chance: 15 },
+  { label: '100 XP', type: 'xp', value: 100, color: '#c72030', chance: 5 },
+  { label: 'Freeze 🧊', type: 'freeze', value: 1, color: '#0891b2', chance: 10 },
+  { label: 'XP כפול', type: 'doubleXP', value: 1, color: '#7c3aed', chance: 8 },
+  { label: 'רמז 💡', type: 'hint', value: 1, color: '#ea580c', chance: 12 },
+  { label: 'בונוס!', type: 'xp', value: 35, color: '#15803d', chance: 5 },
+];
+function canSpin() {
+  const p = getProgress();
+  return p.lastSpinDate !== new Date().toDateString();
+}
+function getWeightedPrize() {
+  const total = WHEEL_PRIZES.reduce((s, p) => s + p.chance, 0);
+  let r = Math.random() * total;
+  for (let i = 0; i < WHEEL_PRIZES.length; i++) {
+    r -= WHEEL_PRIZES[i].chance;
+    if (r <= 0) return i;
+  }
+  return 0;
+}
+function spinWheel() {
+  if (!canSpin()) return;
+  const p = getProgress();
+  p.lastSpinDate = new Date().toDateString();
+  localStorage.setItem('alicecool_progress', JSON.stringify(p));
+
+  const prizeIdx = getWeightedPrize();
+  const segAngle = 360 / WHEEL_PRIZES.length;
+  // Land on this prize (center of segment), pointer at top
+  const targetAngle = 360 - (prizeIdx * segAngle + segAngle / 2);
+  const totalSpin = 1440 + targetAngle; // 4 full rotations + target
+
+  const wheel = document.getElementById('spin-wheel');
+  const btn = document.getElementById('spin-btn');
+  if (!wheel || !btn) return;
+  btn.disabled = true;
+  wheel.style.transition = 'none';
+  wheel.style.transform = 'rotate(0deg)';
+  // Force reflow
+  wheel.offsetHeight;
+  wheel.style.transition = 'transform 4s cubic-bezier(0.17, 0.67, 0.12, 0.99)';
+  wheel.style.transform = `rotate(${totalSpin}deg)`;
+
+  SFX.click();
+
+  setTimeout(() => {
+    const prize = WHEEL_PRIZES[prizeIdx];
+    applyPrize(prize);
+    render();
+  }, 4200);
+}
+function applyPrize(prize) {
+  const p = getProgress();
+  if (prize.type === 'xp') {
+    addXP(prize.value);
+    showCelebration('🎉', `זכית ב-${prize.value} XP!`, 'מזל טוב!', '');
+  } else if (prize.type === 'freeze') {
+    p.streakFreeze = true;
+    localStorage.setItem('alicecool_progress', JSON.stringify(p));
+    showCelebration('🧊', 'זכית ב-Streak Freeze!', 'הרצף שלך מוגן ליום אחד', '');
+  } else if (prize.type === 'doubleXP') {
+    p.doubleXPUntil = Date.now() + 86400000;
+    localStorage.setItem('alicecool_progress', JSON.stringify(p));
+    showCelebration('⚡', 'XP כפול ליום!', 'כל פעולה = כפול XP ל-24 שעות', '');
+  } else if (prize.type === 'hint') {
+    p.hints = (p.hints || 0) + 1;
+    localStorage.setItem('alicecool_progress', JSON.stringify(p));
+    showCelebration('💡', 'זכית ברמז!', `יש לך ${p.hints} רמזים`, '');
+  }
+  SFX.fanfare();
+  showConfetti(30);
+}
+function buildWheelHTML() {
+  const n = WHEEL_PRIZES.length;
+  const segDeg = 360 / n;
+  // Build conic-gradient
+  const stops = WHEEL_PRIZES.map((p, i) => `${p.color} ${i * segDeg}deg ${(i + 1) * segDeg}deg`).join(', ');
+  // Build text labels
+  const labels = WHEEL_PRIZES.map((p, i) => {
+    const angle = i * segDeg + segDeg / 2;
+    return `<div style="position:absolute;top:50%;left:50%;transform:rotate(${angle}deg) translateY(-85px);transform-origin:0 0;font-size:11px;font-weight:800;color:#fff;text-shadow:0 1px 3px rgba(0,0,0,0.5);white-space:nowrap">${p.label}</div>`;
+  }).join('');
+  return `<div id="spin-wheel" style="width:250px;height:250px;border-radius:50%;background:conic-gradient(${stops});position:relative;box-shadow:0 4px 24px rgba(38,34,97,0.25);transition:transform 4s cubic-bezier(0.17,0.67,0.12,0.99)">
+    ${labels}
+  </div>`;
+}
+
+// ─── LEADERBOARD (simulated) ───
+function getLeaderboard() {
+  const p = getProgress();
+  const myXP = p.xp || 0;
+  const myName = p.playerName || 'אתה';
+  const fakeNames = [
+    'Elif_TLV','Maya_IST','DanTheMan','Lior123','TurkCoffee',
+    'Alper42','Yael_BR','Cem_Haifa','NoaLearns','Burak_IL',
+    'Shira_ANK','Omer_Dev','Deniz_TA','Rotem_K','Selin99',
+    'Amir_TRK','Zeynep_IL','GalLearn','Mert_HFA','Daphne_T',
+    'Kaan_IL','Noa_Trk','ErenStudy','SapirGo','Baris_TLV',
+    'HilaLearn','Volkan_IL','TalTurk','Defne_TA','Avi_IST',
+  ];
+  // Generate stable fake XP values (seeded by day of week for weekly reset)
+  const weekNum = Math.floor(Date.now() / (7 * 86400000));
+  const fakers = fakeNames.map((name, i) => {
+    const seed = ((weekNum * 137 + i * 31) % 100) / 100;
+    return { name, xp: Math.floor(seed * 1800 + 50) };
+  });
+  fakers.push({ name: myName, xp: myXP, isMe: true });
+  fakers.sort((a, b) => b.xp - a.xp);
+  return fakers.map((f, i) => ({ ...f, rank: i + 1 }));
+}
+
+// ─── DOUBLE XP CHECK ───
+function isDoubleXP() {
+  const p = getProgress();
+  return p.doubleXPUntil && Date.now() < p.doubleXPUntil;
 }
 
 // Daily goal
@@ -901,6 +1089,31 @@ function renderHome() {
       <span style="font-size:13px;color:#15803d;font-weight:600">${activeLearners} לומדים מחוברים עכשיו</span>
     </div>
 
+    <!-- DAILY BONUS -->
+    ${(() => {
+      const db = getDailyBonus();
+      if (!db.claimed) {
+        return `<div class="card card-hover" style="background:linear-gradient(135deg,#7c3aed,#a855f7);cursor:pointer;text-align:center;padding:20px" onclick="claimDailyBonus()">
+          <div style="font-size:36px;margin-bottom:8px">🎁</div>
+          <div style="color:#fff;font-size:18px;font-weight:800">בונוס יומי מחכה לך!</div>
+          <div style="color:#ddd;font-size:13px;margin-top:4px">לחץ לקבל את הפרס של היום</div>
+        </div>`;
+      }
+      const rewards = [10,15,20,25,30,50,100];
+      return `<div class="card" style="padding:12px 16px">
+        <div style="font-size:12px;font-weight:700;color:var(--muted);margin-bottom:8px">🎁 בונוס יומי – יום ${db.day}/7</div>
+        <div style="display:flex;gap:4px;justify-content:space-between">
+          ${rewards.map((r,i) => `<div style="text-align:center;flex:1">
+            <div style="width:32px;height:32px;border-radius:50%;margin:0 auto;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;
+              ${i < db.day ? 'background:var(--success);color:#fff' : i === db.day ? 'background:var(--warning);color:#fff;animation:pulse 2s infinite' : 'background:#e8e8f4;color:#999'}">
+              ${i < db.day ? '✓' : r}
+            </div>
+            <div style="font-size:9px;color:var(--muted);margin-top:2px">יום ${i+1}</div>
+          </div>`).join('')}
+        </div>
+      </div>`;
+    })()}
+
     <!-- DAILY GOAL + STREAK -->
     <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
       <!-- Daily Goal Ring -->
@@ -1006,10 +1219,67 @@ function renderHome() {
       <div style="font-size:13px;color:#555;line-height:1.6">${surprise.text}</div>
     </div>
 
-    <!-- XP BAR -->
-    <div style="text-align:center;padding:8px">
-      <div style="font-size:12px;color:var(--muted);font-weight:600">${xp} XP</div>
+    <!-- SPIN WHEEL -->
+    <div class="card" style="text-align:center;padding:20px">
+      <div style="font-size:12px;font-weight:700;color:var(--muted);letter-spacing:1px;margin-bottom:12px">🎰 גלגל מזל יומי</div>
+      ${canSpin() ? `
+        <div class="wheel-container" style="display:inline-block;position:relative">
+          <div class="wheel-pointer">▼</div>
+          ${buildWheelHTML()}
+          <button class="wheel-spin-btn" id="spin-btn" onclick="spinWheel()">סובב!</button>
+        </div>
+        <div style="font-size:12px;color:var(--success);margin-top:10px;font-weight:600">סיבוב אחד בחינם היום!</div>
+      ` : `
+        <div style="font-size:48px;margin-bottom:8px">🎰</div>
+        <div style="font-size:14px;color:var(--muted);font-weight:600">כבר סובבת היום!</div>
+        <div style="font-size:12px;color:var(--muted)">חזור מחר לסיבוב חדש 🕐</div>
+      `}
     </div>
+
+    <!-- LEADERBOARD PREVIEW -->
+    <div class="card" style="padding:16px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+        <div style="font-size:14px;font-weight:800;color:var(--navy)">🏆 לוח תוצאות שבועי</div>
+        <span style="font-size:12px;color:var(--purple);cursor:pointer;font-weight:600" onclick="navigate('leaderboard')">הצג הכל ›</span>
+      </div>
+      ${(() => {
+        const lb = getLeaderboard();
+        const myIdx = lb.findIndex(f => f.isMe);
+        const top3 = lb.slice(0, 3);
+        const myEntry = lb[myIdx];
+        const medals = ['🥇','🥈','🥉'];
+        let html = top3.map((f, i) => `
+          <div class="lb-row ${f.isMe ? 'lb-me' : ''}">
+            <div class="lb-rank">${medals[i]}</div>
+            <div class="lb-name">${f.isMe ? '⭐ ' + f.name : f.name}</div>
+            <div class="lb-xp">${f.xp} XP</div>
+          </div>`).join('');
+        if (myIdx > 2) {
+          html += `<div style="text-align:center;color:var(--muted);font-size:18px;padding:4px 0">···</div>`;
+          html += `<div class="lb-row lb-me">
+            <div class="lb-rank" style="color:var(--red);font-weight:900">${myEntry.rank}</div>
+            <div class="lb-name">⭐ ${myEntry.name}</div>
+            <div class="lb-xp">${myEntry.xp} XP</div>
+          </div>`;
+        }
+        return html;
+      })()}
+    </div>
+
+    <!-- LEVEL + XP BAR -->
+    ${(() => {
+      const info = getLevelInfo(xp);
+      return `<div class="card" style="display:flex;align-items:center;gap:14px;padding:14px 16px">
+        <div style="font-size:32px">${info.current.icon}</div>
+        <div style="flex:1">
+          <div style="font-size:14px;font-weight:800;color:var(--navy)">${info.current.label} – ${xp} XP</div>
+          <div class="progress-bar" style="margin-top:6px">
+            <div class="progress-fill" style="width:${info.pct}%"></div>
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:4px">עוד ${info.next.min - xp} XP ל${info.next.icon} ${info.next.label}</div>
+        </div>
+      </div>`;
+    })()}
   </div>`;
 }
 
@@ -1268,7 +1538,11 @@ function answerQuiz(idx, isCorrect, elId) {
     if (feedback) { feedback.textContent = '✅ מצוין!'; feedback.style.color = '#15803d'; }
     state.quizScore++;
     state.quizCorrectStreak++;
-    addXP(10);
+    // Perfect streak XP bonus
+    let xpGain = 10;
+    if (state.quizCorrectStreak >= 10) { xpGain = 30; }
+    else if (state.quizCorrectStreak >= 5) { xpGain = 20; }
+    addXP(xpGain);
     addDailyWord(1);
     updateWordStrength(wordKey, true);
     SFX.correct();
@@ -1276,8 +1550,11 @@ function answerQuiz(idx, isCorrect, elId) {
     if (state.quizCorrectStreak === 3) {
       showToast('🔥 3 ברצף! כל הכבוד!');
     } else if (state.quizCorrectStreak === 5) {
-      showToast('⚡ 5 ברצף! אש!');
+      showToast('⚡ 5 ברצף! XP כפול!');
       showConfetti(15);
+    } else if (state.quizCorrectStreak === 10) {
+      showToast('💥 10 ברצף! XP משולש!!');
+      showConfetti(30);
     }
   } else {
     el.classList.add('wrong');
@@ -1868,18 +2145,7 @@ function renderProfile() {
   const streak = p.streak || 1;
   const doneCount = Object.keys(p).filter(k => k.startsWith('done_') && p[k]).length;
   const totalCats = Object.keys(WORDS).length + Object.keys(SERIES).length;
-  const levels = [
-    { min:0, label:'מתחיל', icon:'🌱' },
-    { min:100, label:'בסיסי', icon:'📖' },
-    { min:300, label:'בינוני', icon:'⭐' },
-    { min:600, label:'מתקדם', icon:'🌟' },
-    { min:1000, label:'מומחה', icon:'💎' },
-    { min:1500, label:'מאסטר', icon:'👑' },
-    { min:2500, label:'אגדה', icon:'🏆' },
-  ];
-  const currentLevel = [...levels].reverse().find(l => xp >= l.min) || levels[0];
-  const nextLevel = levels.find(l => l.min > xp) || levels[levels.length - 1];
-  const pctToNext = Math.min(100, Math.round(((xp - currentLevel.min) / (nextLevel.min - currentLevel.min)) * 100));
+  const { current: currentLevel, next: nextLevel, pct: pctToNext } = getLevelInfo(xp);
 
   const unlockedAchievements = ALL_ACHIEVEMENTS.filter(a => p.achievements && p.achievements[a.id]);
   const lockedAchievements = ALL_ACHIEVEMENTS.filter(a => !p.achievements || !p.achievements[a.id]);
@@ -1955,6 +2221,40 @@ function renderProfile() {
   </div>`;
 }
 
+function renderLeaderboard() {
+  const lb = getLeaderboard();
+  const myIdx = lb.findIndex(f => f.isMe);
+  const medals = ['🥇','🥈','🥉'];
+  return `
+  <div class="fade-in" style="display:flex;flex-direction:column;gap:14px">
+    <div style="display:flex;align-items:center;gap:12px">
+      <button class="btn btn-ghost" onclick="navigate('home')" style="padding:8px">‹ חזרה</button>
+      <h2 style="font-size:22px;font-weight:900;color:var(--navy)">🏆 לוח תוצאות שבועי</h2>
+    </div>
+    <div class="card" style="padding:8px 0">
+      ${lb.slice(0, 20).map((f, i) => `
+        <div class="lb-row ${f.isMe ? 'lb-me' : ''}">
+          <div class="lb-rank">${i < 3 ? medals[i] : f.rank}</div>
+          <div class="lb-name">${f.isMe ? '⭐ ' + f.name : f.name}</div>
+          <div class="lb-xp">${f.xp} XP</div>
+        </div>`).join('')}
+      ${myIdx >= 20 ? `
+        <div style="text-align:center;color:var(--muted);font-size:18px;padding:6px 0">···</div>
+        <div class="lb-row lb-me">
+          <div class="lb-rank" style="color:var(--red);font-weight:900">${lb[myIdx].rank}</div>
+          <div class="lb-name">⭐ ${lb[myIdx].name}</div>
+          <div class="lb-xp">${lb[myIdx].xp} XP</div>
+        </div>` : ''}
+    </div>
+    <div style="text-align:center;font-size:12px;color:var(--muted)">
+      ${lb.length} לומדים השבוע · מתאפס כל שבוע
+    </div>
+    ${isDoubleXP() ? `<div class="card" style="background:#f5f3ff;border:2px solid #7c3aed;text-align:center;padding:12px">
+      <span style="font-size:14px;font-weight:700;color:#7c3aed">⚡ XP כפול פעיל!</span>
+    </div>` : ''}
+  </div>`;
+}
+
 function activateFreeze() {
   const p = getProgress();
   if ((p.xp || 0) < 50) { showToast('❌ צריך לפחות 50 XP'); return; }
@@ -1982,12 +2282,13 @@ function render() {
     review: renderReview,
     sentences: renderSentences,
     sentQuiz: renderSentQuiz,
+    leaderboard: renderLeaderboard,
   };
   const fn = screens[state.screen];
   app.innerHTML = fn ? fn() : renderHome();
 
   // Nav highlight
-  const navMap = { home:'home', lessons:'lessons', series:'series', flash:'lessons', quiz:'lessons', chat:'chat', profile:'profile', review:'home', sentences:'sentences', sentQuiz:'sentences' };
+  const navMap = { home:'home', lessons:'lessons', series:'series', flash:'lessons', quiz:'lessons', chat:'chat', profile:'profile', review:'home', sentences:'sentences', sentQuiz:'sentences', leaderboard:'home' };
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
   const activeNav = document.getElementById('nav-' + (navMap[state.screen] || state.screen));
   if (activeNav) activeNav.classList.add('active');
